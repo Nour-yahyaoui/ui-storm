@@ -82,6 +82,10 @@ const colorGroups: Array<{ title: string; description: string; swatches: Swatch[
   },
 ];
 
+/** HTML ids must be single tokens: "Interaction and status" would become a
+ * multi-token aria-labelledby value and break the association. */
+const groupId = (title: string) => `group-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+
 const motionTokens = [
   { token: '--aui-duration-fast', value: '120ms', usage: 'Hover, focus feedback' },
   { token: '--aui-duration-base', value: '180ms', usage: 'Menus, tooltips' },
@@ -103,9 +107,9 @@ export function ColorTokensDemo() {
       </header>
 
       {colorGroups.map((group) => (
-        <section key={group.title} aria-labelledby={`group-${group.title}`} className="space-y-4">
+        <section key={group.title} aria-labelledby={groupId(group.title)} className="space-y-4">
           <div className="space-y-1">
-            <h2 id={`group-${group.title}`} className="text-xl font-semibold">
+            <h2 id={groupId(group.title)} className="text-xl font-semibold">
               {group.title}
             </h2>
             <p className="text-sm text-muted">{group.description}</p>
