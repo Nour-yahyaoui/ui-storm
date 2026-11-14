@@ -1,0 +1,64 @@
+name: Accessibility barrier
+description: Something in the library or docs excludes people with disabilities
+title: '[a11y] '
+labels: ['type: a11y', 'area: a11y-audit', 'priority: p1']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a barrier. Accessibility issues are triaged with the same urgency as security issues.
+        If this is a security vulnerability, do not use this form — see SECURITY.md instead.
+
+  - type: checkboxes
+    id: affected
+    attributes:
+      label: Who is affected?
+      description: Select every group this barrier affects.
+      options:
+        - label: Screen reader users
+        - label: Keyboard-only users
+        - label: Voice control / speech input users
+        - label: Low-vision users (zoom, high contrast, forced colors)
+        - label: Users with vestibular or motion sensitivity
+        - label: Users of Arabic / RTL interfaces
+        - label: Users with cognitive or reading differences
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happens
+      description: Describe the barrier, not the fix. What can you not do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Storybook → Components/Tabs
+        2. Switch the Locale toolbar to العربية
+        3. Press ArrowRight from the first tab
+        4. Focus moves to the wrong tab
+    validations:
+      required: true
+
+  - type: input
+    id: assistive-tech
+    attributes:
+      label: Assistive technology and versions
+      placeholder: NVDA 2024.4 + Firefox 132, VoiceOver + iOS 18, Windows High Contrast
+    validations:
+      required: true
+
+  - type: input
+    id: wcag
+    attributes:
+      label: WCAG criterion, if known
+      placeholder: 2.1.1 Keyboard / 1.4.11 Non-text Contrast / 4.1.2 Name, Role, Value
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: v0.1.0 or commit sha

@@ -1,0 +1,10 @@
+@import 'tailwindcss' source(none);
+@import './tokens.css';
+@import './base.css';
+@import './index.css';
+
+/**
+ * Storybook-only stylesheet: compiles utilities from stories, docs and
+ * foundations demos in addition to the shipped component sources.
+ */
+@source "../../src";

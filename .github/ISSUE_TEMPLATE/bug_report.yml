@@ -1,0 +1,55 @@
+name: Bug report
+description: Something behaves differently from the documentation
+title: '[bug] '
+labels: ['type: bug', 'priority: p2']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For accessibility barriers, please use the **Accessibility barrier** template so it gets the right triage.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: v0.1.0 / 248d06d
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      multiple: true
+      options:
+        - Chromium
+        - Firefox
+        - Safari / WebKit
+        - Node (SSR)
+        - React 19
+        - React 18
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Include console errors and warnings verbatim if there are any.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: A code snippet, a Storybook story id, or a repository link.
+    validations:
+      required: true
