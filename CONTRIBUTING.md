@@ -1,94 +1,93 @@
 # Contributing
 
-Thanks for helping. This library exists because accessible, RTL-native components are hard to find, and they are only trustworthy if every claim has a test behind it.
+Thanks for taking the time. This project has two hard rules, and everything else is negotiable.
 
-## Setup
+1. **Accessibility is a build gate, not a review opinion.** If a change makes a guarantee untested,
+   the change is incomplete.
+2. **Direction is structural.** A component that only works in LTR is not finished.
 
-```bash
-npm install
-npx playwright install chromium   # only needed for the browser suite
-npm run dev                       # Storybook on :6006
-npm run verify                    # what CI runs, minus the browser suite
-```
+## Prerequisites
 
-Node 22 is required (see `.nvmrc`).
+| Tool | Version | Needed for |
+| --- | --- | --- |
+| Rust | 1.82 (see `rust-toolchain.toml`) | Everything |
+| Python | 3.11+ | `scripts/build_backlog.py` |
+| Node | 22 | Playwright and axe only; the library is Rust |
 
-## Finding work
+## Commands
 
-- Issues are grouped into 12 milestones. Start with **00 · Foundations & tooling** unless you are picking up a component.
-- `good first issue` marks work that is scoped, documented and reviewable in one sitting.
-- Every issue states its acceptance criteria. If an issue is unclear, ask in the issue before writing code — that is useful signal, not noise.
+| Command | What it does |
+| --- | --- |
+| `cargo fmt --all` | Formatting. CI reports drift but does not block on it, so run this before pushing |
+| `cargo clippy --workspace --all-targets -- --deny warnings` | Lints; warnings are errors |
+| `cargo test --workspace` | Unit, markup contract and HTTP tests |
+| `cargo run --package ui-storm-web` | The gallery on `0.0.0.0:8080` |
+| `npx playwright test` | axe, keyboard, RTL and no-JavaScript runs |
+| `python3 scripts/build_backlog.py --check` | The backlog matches its generator |
 
-## The component lifecycle
+`npx playwright test` starts the real gallery binary through `webServer` in `playwright.config.ts`;
+you do not need to run the server yourself.
 
-A component is done when all of the following exist. This is also the checklist reviewers use.
+## Adding or changing a component
 
-1. **Implementation** — token-only styling, `ref` forwarding, controlled and uncontrolled modes, development warnings for invalid usage.
-2. **Accessibility contract** — the WAI-ARIA pattern named in the issue, implemented as written. No extra roles "for safety".
-3. **Keyboard** — the documented key map works, focus stays visible, and no positive `tabindex` exists.
-4. **RTL** — logical properties only, an Arabic story that does not clip, bidi isolation for embedded Latin text.
-5. **Tests** — unit tests via `render` from `src/test-utils/render.tsx` in both directions, `expectNoA11yViolations`, and a Playwright spec for the keyboard path.
-6. **Stories** — every state, plus RTL and dark mode.
-7. **Docs** — a page with when-to-use, anatomy, keyboard table, ARIA table, RTL notes, examples and common mistakes.
-8. **Changeset** — `minor` for a new component, `patch` for a fix.
+A component is done when all seven of these are done. They mirror the seven issues the backlog opens
+per component, and the review checklist on a pull request.
 
-## Testing accessibility locally
+1. **API** — a builder in `crates/ui-storm/src/components/<name>.rs`. `new(..)` takes every prop
+   with no safe default, and that includes names: a component whose accessible name can be omitted
+   is a bug. Borrow `&'a str`; do not allocate for static text.
+2. **Markup** — the native element first. The role comes from the platform; `aria-*` only describes
+   relationships the platform cannot. Render from a pure function; no request access, no globals.
+3. **Keyboard** — every interactive part is reachable and operable, focus is visible, and composite
+   widgets have exactly one tab stop. Arrow keys follow the reading direction.
+4. **RTL** — logical properties only. Test with `?lang=ar`, where the server sets `dir="rtl"`.
+5. **Styles** — token colours only, every state covered, dark theme and `forced-colors` checked,
+   motion disabled under `prefers-reduced-motion`.
+6. **Docs** — a gallery page with live demos, the ARIA contract, a keyboard table, and the real
+   rendered markup (call `render()`, do not paste a copy).
+7. **Tests** — markup assertions in `crates/ui-storm/tests/components.rs`, the page in the axe run,
+   and the interaction in `tests/e2e/keyboard.spec.ts`.
 
-```bash
-npm test                 # jsdom + axe, includes the harness self-test
-npm run test:coverage    # same, with thresholds
-npm run test:contrast    # token contrast pairs, light and dark
-npm run test:e2e         # Playwright + axe against the built Storybook
-```
+## CSS rules
 
-`npm run test:e2e` builds Storybook first. It is the only suite that can see color contrast, layout and reflow — jsdom cannot, and the jsdom suite deliberately skips those rules rather than pretending.
+- No physical properties. Not `left`, not `right`, not `margin-left`, not `text-align: left`. The
+  test `stylesheet_uses_only_logical_properties` fails the build either way, so save yourself the
+  round trip.
+- No colour outside the token block. If you need a new one, add it to the `:root` block **and** to
+  `src/tokens.rs`, then audit it in both themes.
+- No `!important` outside the reduced-motion block, and no inline styles from components.
+- Prefer the platform: `:focus-visible`, `:disabled`, `accent-color`, `<dialog>`, `<details>`.
 
-### Manual screen reader pass
+## Tests
 
-For component work, do at least one of:
+- A markup test asserts the contract, not a snapshot of the whole string.
+- A behaviour test drives the real page through Playwright; do not mock the DOM.
+- Never weaken an assertion to make a change pass. If the assertion is wrong, fix it deliberately
+  and say why in the pull request.
+- New pages must be added to `PAGES` in `tests/e2e/gallery.spec.ts` so axe runs on them.
 
-- **VoiceOver** (macOS): `Cmd+F5`, then use `VO+Right` to walk elements.
-- **NVDA** (Windows, free): enable speech viewer to read announcements.
-- **TalkBack** (Android): swipe navigation, focus indicator enabled.
+## Backlog
 
-Record in the issue: what was announced, in which order, and anything missing. A screen reader pass cannot be automated away.
-
-### Arabic and RTL checks
-
-- Switch the Storybook **Locale** toolbar to `العربية (RTL)`; the toolbar sets `dir` and `lang`, not just a class.
-- Add mixed content: an Arabic sentence containing a Latin identifier, a phone number and a URL. That is where bidi breaks.
-- Check numerals: Arabic-Indic digits are correct for some locales, wrong for others. Do not assume.
-- Read [docs/rtl-and-arabic.md](docs/rtl-and-arabic.md) before touching layout.
-
-## Code conventions
-
-- **No physical CSS properties.** Use `ms-`, `me-`, `ps-`, `pe-`, `start-`, `end-`, `text-start`, `text-end`. A lint rule is tracked in the backlog.
-- **No literal colors, radii or durations.** Use `--aui-*` tokens.
-- **No `any` in public types.** No `@ts-ignore` without an explanation in the same line.
-- **`cn()` merges classes; it does not resolve Tailwind conflicts.** Expose variants instead of relying on override order.
-- **Names are accessible by construction.** An icon-only control without a name should be a type error, not a review comment.
-
-## Changesets
-
-```bash
-npx changeset
-```
-
-Pick `minor` for new components and `patch` for fixes. Breaking changes during 0.x bump the minor and must be labelled `breaking-change` with migration notes.
-
-## Backlog changes
-
-The backlog is generated. Do not edit `backlog/backlog.json` by hand.
-
-```bash
-# edit backlog/catalog.mjs, backlog/config.mjs or backlog/initiatives/*
-npm run backlog:build     # regenerate JSON + docs/backlog.md
-npm run backlog:check     # what CI runs
-npm run backlog:publish   # create labels, milestones and issues (idempotent)
-```
-
-The generator rejects duplicate titles, unknown labels, unknown dependencies and dependency cycles, so a broken change fails locally instead of creating a mess on GitHub.
+The backlog is generated. Do not edit `docs/backlog.md` or `backlog/issues.json` by hand — change
+`scripts/build_backlog.py` and regenerate. If you are picking something up, comment on the issue so
+two people do not build the same component.
 
 ## Pull requests
 
-Fill in the accessibility checklist honestly. Delete sections that do not apply and say why. Include LTR and RTL screenshots for visual changes. A PR without a changeset fails CI.
+- One logical change per pull request. A component plus refactors plus a docs overhaul is three.
+- The description says what changed, why, and what you checked. The template asks for the
+  accessibility impact because most changes have one.
+- CI must be green. Reviewers will not merge red. The formatting step is reported
+  separately: apply it, but a formatting diff alone will not fail the run.
+- Commit messages are plain and imperative: `Add select component`, `Fix tab focus in RTL`.
+
+## Reporting problems
+
+- Bug or feature: the issue templates.
+- Accessibility barrier: the accessibility template; these are triaged like security issues.
+- Security vulnerability: [`SECURITY.md`](SECURITY.md), never a public issue.
+
+## Code of conduct
+
+Be decent. Assume competence and good faith, criticise the change and not the person, and make room
+for the people this library exists for.

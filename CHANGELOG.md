@@ -1,0 +1,40 @@
+# Changelog
+
+All notable changes are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- Rust workspace: `ui-storm` (library) and `ui-storm-web` (gallery).
+- Components rendered with Maud: `Button`, `IconButton`, `Input`, `Checkbox`, `Dialog`, `Tabs`.
+- `direction::locale_direction` — BCP-47 tag to writing direction, with RTL language and script
+  tables and a deliberate LTR exception for Kurdish (Latin).
+- `tokens` — the palette as Rust data, WCAG 2.2 contrast maths, and tests that compare the Rust
+  palette against the shipped stylesheet and forbid physical CSS properties.
+- `assets::CSS` and `assets::SCRIPT` — the stylesheet and the enhancement script compiled into the
+  crate.
+- Gallery served by Actix Web: overview, foundations with measured contrast ratios, six component
+  pages, accessibility policy, and a full Arabic RTL page. Language and theme are query parameters
+  and are resolved on the server.
+- Test suites: markup contracts per component, HTTP contracts per page, Playwright axe runs across
+  two themes and two directions, keyboard and no-JavaScript runs.
+- Generated backlog of 332 issues across 13 milestones (`scripts/build_backlog.py`, `docs/backlog.md`).
+
+### Changed
+
+- The project is rebuilt in Rust. The React/TypeScript implementation, Storybook, Vite, Vitest and
+  Tailwind have been removed; see `docs/adr/0002-rust-rewrite.md`.
+- Class prefix changed from `aui-` to `ui-`.
+- Documentation is the gallery application, not a set of MDX stories.
+
+### Removed
+
+- `src/`, the React tests, Storybook configuration, ESLint/Prettier configuration, and the npm build
+  and lint scripts.
+
+## Historical
+
+The 0.x TypeScript releases were not published to any registry. Their record is the git history and
+the 376 issues still open in the tracker.

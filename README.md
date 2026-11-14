@@ -1,195 +1,172 @@
-# Accessible UI Lab
+# ui-storm
 
-An accessibility-first React + TypeScript component library with **first-class Arabic and RTL support**.
+Accessibility-first, right-to-left-native UI components for Rust.
 
-Most component libraries treat right-to-left as a stylesheet flip and accessibility as a checklist applied at the end. This one starts from the opposite direction: the keyboard contract, the ARIA semantics and the bidi behaviour are designed first, and the visual layer follows.
-
-> [!IMPORTANT]
-> This repository is at **foundation stage**. The tokens, direction layer, test harness, Storybook and CI are implemented and green.
-> The components themselves — starting with `Button`, `Input`, `Checkbox`, `Dialog` and `Tabs` — are tracked as individual
-> GitHub issues in [12 milestones](docs/backlog.md) and land one issue at a time.
+Components are server-rendered HTML built with [Maud](https://maud.lambda.xyz/), served by
+[Actix Web](https://actix.rs/). There is no client framework, no hydration and no build step: the
+markup is the source of truth, and a 5 kB script adds only the behaviour HTML cannot express.
 
 [![CI](https://github.com/Nour-yahyaoui/ui-storm/actions/workflows/ci.yml/badge.svg)](https://github.com/Nour-yahyaoui/ui-storm/actions/workflows/ci.yml)
-[![Storybook](https://github.com/Nour-yahyaoui/ui-storm/actions/workflows/storybook-pages.yml/badge.svg)](https://github.com/Nour-yahyaoui/ui-storm/actions/workflows/storybook-pages.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](LICENSE)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-black.svg)](LICENSE)
 
 ## Why this exists
 
-Arabic is written right to left, with a cursive script, contextual letterforms, diacritics above and below the baseline, its own numeral systems, and a calendar that is not Gregorian in several countries. A library that only mirrors its margins gets none of that right.
+Most component libraries treat accessibility as a checklist applied at the end, and treat
+right-to-left as a stylesheet flip. Both fail in the same way: the guarantee is asserted in a
+document, not in the build.
 
-At the same time, accessibility features that Arabic-speaking users depend on — visible focus, screen reader announcements, keyboard paths, forced-colors support — are usually bolted on late, if at all.
-
-Accessible UI Lab treats both as product requirements with tests attached.
-
-## What is implemented today
-
-| Area                                                                              | Status                                                             |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Design tokens (light, dark, high contrast, forced colors)                         | ✅ `src/styles/tokens.css`, 28 automated contrast checks           |
-| Direction layer (`DirectionProvider`, `useDirection`, locale → dir)               | ✅ including script subtags (`az-Arab`) and nested overrides       |
-| Focus utilities (`getTabbableElements`, `getFocusableElements`, focus first/last) | ✅ with unit tests                                                 |
-| Test harness (`render` with direction, `expectNoA11yViolations`)                  | ✅ guards itself against false negatives                           |
-| Storybook with locale + theme toolbars and the a11y addon                         | ✅ three foundation story sets                                     |
-| Playwright + axe-core browser suite                                               | ✅ LTR/RTL WCAG scans, direction geometry, 320px reflow, dark mode |
-| CI (types, lint, unit, contrast, build, backlog sync, browser tests)              | ✅ two workflows                                                   |
-| Components                                                                        | 🚧 tracked as 376 issues across 12 milestones                      |
-
-### The foundation, concretely
-
-- **Tokens are the only source of color, spacing, radius and motion.** Components never hard-code a value, so dark mode, `prefers-contrast` and Windows High Contrast work without recompiling.
-- **Two border tokens exist on purpose.** `--aui-color-border` is decorative; `--aui-color-border-strong` meets the 3:1 non-text contrast requirement for control boundaries (WCAG 1.4.11).
-- **Direction is resolved once.** `getDirectionFromLocale('ar-EG')` → `rtl`, including script subtags, so `az-Arab` is RTL while `az-Latn` is not. `DirectionProvider` sets `dir` and `lang` on a wrapper, which is what makes CSS logical properties and `:lang(ar)` Arabic typography work.
-- **Contrast is checked mechanically.** `npm run test:contrast` parses the real token file and asserts 14 documented pairs in both themes.
-- **The a11y harness tests itself.** `src/test-utils/axe.test.tsx` asserts that axe catches a missing `alt` and an unlabelled input. If the harness silently stopped reporting, those tests fail.
+ui-storm inverts that. The label is a required argument, so an unlabelled input does not compile.
+The stylesheet contains no physical property, so there is nothing to mirror. Contrast ratios are
+computed from the shipped CSS in a test, so a colour tweak that breaks legibility fails CI. Every
+page of the gallery is run through axe in both themes and both directions.
 
 ## Quick start
 
+```toml
+[dependencies]
+ui-storm = "0.1.0"
+maud = "0.27"
+actix-web = "4"
+```
+
+```rust
+use actix_web::{get, App, HttpResponse, HttpServer};
+use maud::{html, Markup};
+use ui_storm::{Button, ButtonVariant, Input, InputType};
+
+fn sign_in_form() -> Markup {
+    html! {
+        (Input::new("email", "Email address", "email")
+            .input_type(InputType::Email)
+            .autocomplete("email")
+            .required(true)
+            .render())
+        (Button::new("Sign in").variant(ButtonVariant::Primary).render())
+    }
+}
+
+#[get("/")]
+async fn index() -> HttpResponse {
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(sign_in_form().into_string())
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| App::new().service(index))
+        .bind(("0.0.0.0", 8080))?
+        .run()
+        .await
+}
+```
+
+The page needs two assets: `crates/ui-storm/assets/ui-storm.css` and `ui-storm.js`. Serve them from
+your own routes (the gallery shows how), or copy them into your static directory.
+
+## The gallery
+
+The documentation site is a real Actix Web app built from the library, so a broken component breaks
+the docs.
+
 ```bash
-git clone https://github.com/Nour-yahyaoui/ui-storm.git
-cd ui-storm
-npm install
-npm run dev          # Storybook on http://localhost:6006
-npm run verify       # types, lint, format, unit tests, contrast, build
+cargo run --package ui-storm-web
+# http://0.0.0.0:8080
 ```
 
-### Using the foundation
+| Route | What it shows |
+| --- | --- |
+| `/` | Overview, component index, verification matrix |
+| `/foundations` | Palette, measured contrast ratios, type and spacing scale |
+| `/components/{name}` | Live demos, ARIA contract, keyboard table, real rendered markup |
+| `/accessibility` | The six rules and how each one is tested |
+| `/rtl` | The whole gallery in Arabic, right to left |
+| `/assets/ui-storm.css`, `/assets/ui-storm.js` | The shipped assets |
 
-```tsx
-import { DirectionProvider, useDirection, cn } from 'accessible-ui-lab';
-import 'accessible-ui-lab/styles.css';
+Language and theme are server-side decisions: `?lang=ar` renders `<html lang="ar" dir="rtl">`,
+`?theme=dark` renders the dark palette. Every page has one URL and no client state.
 
-export function App() {
-  return (
-    <DirectionProvider locale="ar-EG">
-      <Invoice />
-    </DirectionProvider>
-  );
-}
+## Components
 
-function Invoice() {
-  const { dir, isRTL } = useDirection();
+Shipped in this first drop:
 
-  return (
-    // Logical utilities: no `ml-*`/`left-*` anywhere, so this works in both directions.
-    <section
-      className={cn('rounded-lg border border-border bg-surface p-4', 'text-start')}
-      dir={dir}
-    >
-      <h2 className="font-semibold">فاتورة</h2>
-      <p className="text-muted">{isRTL ? 'اتجاه من اليمين إلى اليسار' : 'Left to right'}</p>
-    </section>
-  );
-}
+| Component | Element | Notes |
+| --- | --- | --- |
+| Button | `<button>` | Four variants, three sizes, loading state that never renames the button |
+| Icon button | `<button>` | Name is visually hidden text, never a drifting `aria-label` |
+| Text input | `<input>` | Label, description and error wired by the component |
+| Checkbox | `<input type="checkbox">` | Native, including the indeterminate state |
+| Dialog | `<dialog>` | Platform focus trap, ARIA naming, focus return |
+| Tabs | `[role=tablist]` | Direction-aware arrow keys, works without JavaScript |
+
+Planned and tracked in the backlog: link, select, combobox, radio group, switch, textarea, field
+group, slider, date field, file upload, error summary, tooltip, popover, menu, drawer, command
+palette, accordion, breadcrumb, pagination, stepper, tree view, alert, toast, progress, spinner,
+empty state, table, card, badge, avatar.
+
+## Verification
+
+Nothing here is a claim without a test.
+
+| Claim | Enforced by |
+| --- | --- |
+| Text meets 4.5:1, boundaries and focus rings 3:1, in both themes | `crates/ui-storm/src/tokens.rs` |
+| The stylesheet and the Rust palette never diverge | `stylesheet_palette_matches_the_rust_tokens` |
+| No physical CSS property exists | `stylesheet_uses_only_logical_properties` |
+| Labels, ids and ARIA relationships are present and unique | `crates/ui-storm/tests/components.rs` |
+| Every page answers, in both directions, with one `h1` and a skip link | `crates/ui-storm-web/tests/gallery.rs` |
+| No serious axe violation, no keyboard trap, no focus loss | `tests/e2e/*.spec.ts` |
+| The backlog is generated, never hand-edited | `python3 scripts/build_backlog.py --check` |
+
+Run everything locally:
+
+```bash
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets -- --deny warnings
+cargo test --workspace
+npm ci && npx playwright install chromium && npx playwright test
+python3 scripts/build_backlog.py --check
 ```
 
-The stylesheet must be imported once by the host app. It is compiled CSS — **consumers do not need Tailwind**.
-
-## Arabic and RTL
-
-Four rules the library enforces, each with a test:
-
-1. **Logical properties only.** `ms-*`/`me-*`, `ps-*`/`pe-*`, `start-*`/`end-*`, `text-start`/`text-end`, `border-s`/`border-e`. Physical margins in component source are a review blocker and, soon, a lint error.
-2. **Icons mirror by meaning, not by habit.** Arrows mirror; checkmarks, clocks, logos and media controls do not.
-3. **Numbers are a product decision.** Arabic-Indic (`٠١٢٣`) and Western digits both exist; each locale gets an explicit choice, not a font default.
-4. **Embedded Latin text is isolated.** Identifiers, phone numbers and URLs inside Arabic sentences are wrapped in `bdi` or `dir="ltr"`.
-
-Read [docs/rtl-and-arabic.md](docs/rtl-and-arabic.md) for the full guidance, including Hijri calendar caveats and the mixed-script checklist.
-
-## Accessibility
-
-The target is **WCAG 2.2 AA**, verified rather than asserted:
-
-- **Automated, in jsdom:** roles, names, states, ARIA relationships, heading structure — via axe-core, with contrast and target size explicitly _not_ faked (jsdom has no layout).
-- **Automated, in a real browser:** WCAG A/AA scans in LTR and RTL, dark mode, direction geometry, 320px reflow without horizontal scrolling.
-- **Automated, static:** token contrast ratios computed from the source tokens.
-- **Manual, per component issue:** keyboard walkthrough and a VoiceOver/NVDA pass, recorded in the issue.
-
-What is _not_ claimed: this repository has no manual screen reader sign-off yet for the components, because the components do not exist yet. [docs/accessibility.md](docs/accessibility.md) states exactly what is proven, how, and what remains.
-
-## Scripts
-
-| Script                            | What it does                                                |
-| --------------------------------- | ----------------------------------------------------------- |
-| `npm run dev`                     | Storybook on port 6006                                      |
-| `npm run build`                   | ESM library build + type declarations (`dist/`)             |
-| `npm run build:storybook`         | Static Storybook in `storybook-static/`                     |
-| `npm run typecheck`               | `tsc --noEmit` over source, tests, stories and configs      |
-| `npm run lint`                    | ESLint with `jsx-a11y` on every TSX file                    |
-| `npm run format` / `format:check` | Prettier                                                    |
-| `npm test`                        | Vitest (jsdom) including axe assertions                     |
-| `npm run test:coverage`           | Vitest + v8 coverage with thresholds                        |
-| `npm run test:contrast`           | WCAG contrast checks against the real token file            |
-| `npm run test:e2e`                | Playwright + axe-core against the built Storybook           |
-| `npm run backlog:build`           | Regenerate `backlog/backlog.json` and `docs/backlog.md`     |
-| `npm run backlog:publish`         | Create labels, milestones and issues on GitHub (idempotent) |
-| `npm run verify`                  | Everything that must be green before a PR                   |
-
-> `npm run test:e2e` needs a Playwright browser: `npx playwright install chromium`. The sandbox in which this foundation was built had no access to the browser CDN, so the browser suite is verified by CI, not locally. Everything else was run locally.
-
-## Project structure
+## Repository layout
 
 ```
-.
-├── .github/
-│   ├── ISSUE_TEMPLATE/        # accessibility barrier, bug, proposal
-│   ├── workflows/ci.yml       # types, lint, unit, contrast, build, backlog, browser
-│   └── workflows/storybook-pages.yml
-├── .storybook/                # locale + theme toolbars, a11y addon
-├── backlog/                   # source of truth for the 376 issues
-│   ├── catalog.mjs            # 53 components and their accessibility contracts
-│   ├── tracks.mjs             # API / keyboard / ARIA / RTL / docs / tests generators
-│   ├── initiatives/           # cross-cutting issues by milestone
-│   └── backlog.json           # generated, published to GitHub
-├── docs/                      # accessibility, RTL, architecture, testing, backlog
-├── scripts/
-│   ├── build-backlog.mjs      # deterministic backlog generation + validation
-│   ├── publish-backlog.mjs    # idempotent GitHub publisher
-│   └── check-contrast.mjs     # WCAG contrast checks on tokens
-├── src/
-│   ├── foundations/           # token, direction and typography stories + tests
-│   ├── hooks/useDirection.ts
-│   ├── lib/                   # cn, direction, focus, mergeRefs
-│   ├── providers/             # DirectionProvider + context
-│   ├── styles/                # tokens, Tailwind theme mapping, base layer
-│   └── test-utils/            # direction-aware render, axe harness
-└── tests/e2e/                 # Playwright + axe
+crates/ui-storm/           The library: components, direction, tokens, assets
+  src/components/          One module per component, props struct + render()
+  src/direction.rs         Locale -> Direction, RTL language and script tables
+  src/tokens.rs            Palette, contrast maths, stylesheet sync checks
+  assets/ui-storm.css      The only stylesheet. Logical properties only.
+  assets/ui-storm.js       Progressive enhancement, dependency-free
+  tests/components.rs      Markup contracts
+crates/ui-storm-web/       The gallery: routes, layout, pages
+tests/e2e/                 Playwright: axe, keyboard, RTL, no-JavaScript
+backlog/issues.json        Generated backlog, 332 issues across 13 milestones
+docs/                      Guides, accessibility statement, ADRs, backlog index
+scripts/build_backlog.py   Backlog generator (also publishes)
 ```
 
-## Roadmap
+## Backlog
 
-The backlog is generated from `backlog/` so it cannot drift from the code:
+`docs/backlog.md` is the readable index; `backlog/issues.json` is canonical. Both are generated:
 
-| Milestone                      | Focus                                                                                |
-| ------------------------------ | ------------------------------------------------------------------------------------ |
-| 00 · Foundations & tooling     | focus trap, dismiss, portals, live regions, SSR harness, scaffolding                 |
-| 01 · Core primitives           | Button, IconButton, Link, Text, Heading, VisuallyHidden, Spinner, Badge, Kbd, Avatar |
-| 02 · Form controls             | Field, Input, Checkbox, Radio, Switch, Select, Combobox, Slider, DatePicker          |
-| 03 · Overlays & messaging      | Dialog, AlertDialog, Drawer, Popover, Tooltip, Menu, Toast, CommandPalette           |
-| 04 · Navigation & structure    | Tabs, Accordion, Breadcrumbs, Pagination, TreeView, SkipLink                         |
-| 05 · Data display              | Table, DataTable, Progress, Meter, Skeleton, EmptyState, Card, Timeline, CodeBlock   |
-| 06 · RTL & Arabic i18n         | fonts, numerals, calendars, pluralisation, screen reader matrix                      |
-| 07 · Accessibility conformance | forced colors, reflow, text spacing, target size, ACR                                |
-| 08 · Documentation             | docs site, keyboard tables, accessibility statement, Arabic docs                     |
-| 09 · Quality engineering       | visual regression, mutation testing, browser matrix, tarball tests                   |
-| 10 · Release                   | changesets, provenance, exports validation, size budgets                             |
-| 11 · Adoption & DX             | theming, dark mode, framework guides, Figma sync, codemods                           |
+```bash
+python3 scripts/build_backlog.py           # regenerate
+python3 scripts/build_backlog.py --check   # what CI runs
+python3 scripts/build_backlog.py --publish # create missing GitHub issues
+```
 
-See [docs/backlog.md](docs/backlog.md) for every issue, and `npm run backlog:publish` to reproduce the GitHub backlog.
+The 376 issues from the earlier React/TypeScript implementation remain open as history; they are
+superseded by this backlog, and the decision to rebuild is recorded in
+[`docs/adr/0002-rust-rewrite.md`](docs/adr/0002-rust-rewrite.md).
 
-Every issue's authoritative **type, area, priority, size and milestone** live in
-`backlog/backlog.json`. Some GitHub integrations can create issues but are not permitted to
-attach labels or milestones to them; when that happens the publisher says so explicitly and
-`npm run backlog:repair` applies the metadata later with a token that has issue write access.
+## Documentation
 
-## Contributing
+- [getting started](docs/getting-started.md)
+- [accessibility statement](docs/accessibility.md)
+- [direction and internationalisation](docs/direction.md)
+- [architecture decisions](docs/adr/)
+- [contributing](CONTRIBUTING.md)
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md). Two rules matter more than the rest:
+## Licence
 
-1. **A component issue is not done without evidence** — axe passing, a keyboard spec, an Arabic story and a documented ARIA contract.
-2. **Physical CSS properties in component source are a bug.** If you need `ml-4`, you need `ms-4`.
-
-Arabic-speaking contributors are especially welcome: the glossary, translations and screen reader matrix all need native review.
-
-## License
-
-[MIT](LICENSE).
+MIT. See [LICENSE](LICENSE).

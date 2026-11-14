@@ -1,23 +1,17 @@
-# dependencies
+# Rust build output
+/target/
+**/*.rs.bk
+
+# Browser test output
 node_modules/
-.pnp
-.pnp.*
-
-# build output
-dist/
-storybook-static/
-*.tsbuildinfo
-
-# test output
-coverage/
 playwright-report/
 test-results/
 blob-report/
+.cache/
 
 # local env
 .env
 .env.*
-!.env.example
 
 # editor / OS
 .DS_Store
@@ -25,4 +19,3 @@ blob-report/
 .vscode/*
 !.vscode/extensions.json
 *.log
-npm-debug.log*
