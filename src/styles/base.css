@@ -1,0 +1,50 @@
+@layer base {
+  /*
+   * Low-selectivity base styles: a host app's own CSS can override any of this
+   * without specificity wars.
+   */
+  :where(html) {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  :where(body) {
+    background-color: var(--aui-color-canvas);
+    color: var(--aui-color-text);
+    font-family: var(--aui-font-sans);
+    line-height: var(--aui-leading-normal);
+  }
+
+  /* Arabic script must not be letter-spaced and needs extra leading. */
+  :where([lang='ar'], [lang^='ar-']) {
+    font-family: var(--aui-font-arabic);
+    line-height: var(--aui-leading-arabic);
+    letter-spacing: normal;
+    word-spacing: normal;
+  }
+
+  /*
+   * One focus treatment for the whole library. `:focus-visible` keeps it for
+   * keyboard users only; the ring is drawn outside the element so it is never
+   * clipped by overflow:hidden on the control itself.
+   */
+  :where(:focus-visible) {
+    outline: var(--aui-focus-ring-width) var(--aui-focus-ring-style) var(--aui-color-focus-ring);
+    outline-offset: var(--aui-focus-ring-offset);
+  }
+
+  @media (forced-colors: active) {
+    :where(:focus-visible) {
+      outline: 3px solid Highlight;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :where(*, *::before, *::after) {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

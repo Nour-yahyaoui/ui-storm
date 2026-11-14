@@ -1,0 +1,71 @@
+@import 'tailwindcss' source(none);
+@import './tokens.css';
+@import './base.css';
+
+/**
+ * Utilities are generated only from the files that ship in the package.
+ * Stories, tests and docs have their own stylesheet (`storybook.css`) so their
+ * one-off classes never bloat the published CSS.
+ */
+@source "../components";
+@source "../providers";
+@source "../hooks";
+@source "../lib";
+
+/**
+ * Tokens are exposed to Tailwind through `@theme inline` so utilities reference
+ * the runtime CSS variables. That keeps dark mode and high-contrast overrides
+ * working without re-generating CSS.
+ */
+@theme inline {
+  --color-canvas: var(--aui-color-canvas);
+  --color-surface: var(--aui-color-surface);
+  --color-surface-raised: var(--aui-color-surface-raised);
+  --color-surface-sunken: var(--aui-color-surface-sunken);
+  --color-overlay: var(--aui-color-overlay);
+
+  --color-text: var(--aui-color-text);
+  /* Named `muted`/`inverse`/`on-accent` so the utilities read `text-muted`, not `text-text-muted`. */
+  --color-muted: var(--aui-color-text-muted);
+  --color-inverse: var(--aui-color-text-inverse);
+  --color-on-accent: var(--aui-color-text-on-accent);
+
+  --color-border: var(--aui-color-border);
+  --color-border-strong: var(--aui-color-border-strong);
+
+  --color-accent: var(--aui-color-accent);
+  --color-accent-hover: var(--aui-color-accent-hover);
+  --color-accent-subtle: var(--aui-color-accent-subtle);
+  --color-focus-ring: var(--aui-color-focus-ring);
+
+  --color-danger: var(--aui-color-danger);
+  --color-danger-subtle: var(--aui-color-danger-subtle);
+  --color-success: var(--aui-color-success);
+  --color-success-subtle: var(--aui-color-success-subtle);
+  --color-warning: var(--aui-color-warning);
+  --color-warning-subtle: var(--aui-color-warning-subtle);
+  --color-info: var(--aui-color-info);
+  --color-info-subtle: var(--aui-color-info-subtle);
+
+  --font-sans: var(--aui-font-sans);
+  --font-arabic: var(--aui-font-arabic);
+  --font-mono: var(--aui-font-mono);
+
+  --text-xs: var(--aui-text-xs);
+  --text-sm: var(--aui-text-sm);
+  --text-base: var(--aui-text-md);
+  --text-lg: var(--aui-text-lg);
+  --text-xl: var(--aui-text-xl);
+  --text-2xl: var(--aui-text-2xl);
+  --text-3xl: var(--aui-text-3xl);
+
+  --radius-sm: var(--aui-radius-sm);
+  --radius-md: var(--aui-radius-md);
+  --radius-lg: var(--aui-radius-lg);
+
+  --shadow-sm: var(--aui-shadow-sm);
+  --shadow-md: var(--aui-shadow-md);
+  --shadow-lg: var(--aui-shadow-lg);
+
+  --ease-standard: var(--aui-ease-standard);
+}

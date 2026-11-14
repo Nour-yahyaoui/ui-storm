@@ -1,0 +1,110 @@
+{
+  "name": "accessible-ui-lab",
+  "version": "0.1.0",
+  "description": "An accessibility-first React + TypeScript component library with first-class Arabic and RTL support.",
+  "keywords": [
+    "react",
+    "typescript",
+    "accessibility",
+    "a11y",
+    "rtl",
+    "arabic",
+    "design-system",
+    "component-library",
+    "tailwindcss",
+    "storybook"
+  ],
+  "license": "MIT",
+  "author": "Nour Yahyaoui",
+  "homepage": "https://github.com/Nour-yahyaoui/ui-storm#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nour-yahyaoui/ui-storm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Nour-yahyaoui/ui-storm/issues"
+  },
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/accessible-ui-lab.js",
+  "module": "./dist/accessible-ui-lab.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/accessible-ui-lab.js"
+    },
+    "./styles.css": "./dist/accessible-ui-lab.css",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "dev": "storybook dev -p 6006 --no-open",
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "build:storybook": "storybook build --quiet",
+    "serve:storybook": "http-server storybook-static -p 6006 -a 0.0.0.0 --silent",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:contrast": "node scripts/check-contrast.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install --with-deps chromium",
+    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run test:contrast && npm run build",
+    "backlog:build": "node scripts/build-backlog.mjs",
+    "backlog:check": "node scripts/build-backlog.mjs --check",
+    "backlog:publish": "node scripts/publish-backlog.mjs"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^9.39.0",
+    "@playwright/test": "^1.65.1",
+    "@storybook/addon-a11y": "^10.6.7",
+    "@storybook/addon-docs": "^10.6.7",
+    "@storybook/react-vite": "^10.6.7",
+    "@tailwindcss/vite": "^4.3.5",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.10",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "@vitest/coverage-v8": "^5.1.0",
+    "axe-core": "^4.14.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "http-server": "^14.1.1",
+    "jsdom": "^31.0.1",
+    "prettier": "^3.10.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "storybook": "^10.6.7",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

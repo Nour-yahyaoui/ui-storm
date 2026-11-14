@@ -1,0 +1,36 @@
+name: Feature or component proposal
+description: Propose a component, prop or capability
+title: '[proposal] '
+labels: ['type: feature', 'priority: p2']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before proposing a new component, check the roadmap in `docs/backlog.md` — most components already have a
+        milestone and a set of issues.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the user need, including the Arabic/RTL angle if it applies.
+    validations:
+      required: true
+
+  - type: input
+    id: pattern
+    attributes:
+      label: Relevant WAI-ARIA APG pattern
+      placeholder: https://www.w3.org/WAI/ARIA/apg/patterns/…
+
+  - type: textarea
+    id: keyboard
+    attributes:
+      label: Proposed keyboard interaction
+      description: If this is interactive, describe every key and what it does.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Existing components, libraries, or a simpler solution.
