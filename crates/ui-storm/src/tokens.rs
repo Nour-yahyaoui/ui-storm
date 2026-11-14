@@ -288,8 +288,6 @@ pub fn css_variables(theme: Theme) -> String {
 mod tests {
     use super::*;
 
-    use crate::assets::CSS;
-
     #[test]
     fn hex_parsing_rejects_malformed_values() {
         assert_eq!(

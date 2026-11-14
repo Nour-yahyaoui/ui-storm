@@ -139,7 +139,10 @@ async fn the_current_page_is_marked_for_assistive_technology() {
 #[actix_web::test]
 async fn component_pages_show_the_library_output_escaped() {
     let response = get("/components/button").await;
-    assert!(response.body.contains("<pre class=\"ui-code\"><code>&lt;button"));
+    assert!(
+        response.body.contains("<pre class=\"ui-code\" tabindex=\"0\"><code>&lt;button"),
+        "the rendered markup should be shown escaped inside a focusable code block"
+    );
 }
 
 #[actix_web::test]

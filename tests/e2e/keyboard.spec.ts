@@ -68,16 +68,30 @@ test.describe("dialog", () => {
     await expect(dialog).toBeVisible();
     await expect(dialog).toHaveAttribute("aria-labelledby", "delete-project-title");
 
-    // Focus starts inside the dialog and never leaves while it is modal.
+    // Focus starts inside the dialog and never leaves while it is modal. Focus on
+    // the dialog element itself counts as inside: the platform focuses the dialog
+    // when no descendant asks for it.
+    const trace: string[] = [];
     for (let i = 0; i < 6; i += 1) {
       await page.keyboard.press("Tab");
-      const inside = await page.evaluate(() => {
-        const active = document.activeElement;
+      const state = await page.evaluate(() => {
+        const active = document.activeElement as HTMLElement | null;
         const open = document.querySelector("dialog[open]");
-        return Boolean(open && active && open.contains(active));
+        const inside = Boolean(
+          active && open && (open === active || open.contains(active)),
+        );
+        const description = active
+          ? `${active.tagName.toLowerCase()}.${String(active.className || "")}`.split(" ")[0]
+          : "none";
+        return { inside, description };
       });
-      expect(inside, "focus escaped the modal dialog").toBe(true);
+      trace.push(`${i}: ${state.inside ? "inside" : "OUTSIDE"} ${state.description}`);
     }
+    const escaped = trace.filter((entry) => entry.includes("OUTSIDE"));
+    expect(escaped, `focus left the dialog: ${trace.join(" | ")}`).toEqual([]);
+
+    // The dialog is in the top layer, which is what makes the rest of the page inert.
+    expect(await dialog.evaluate((node: HTMLDialogElement) => node.matches(":modal"))).toBe(true);
 
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
