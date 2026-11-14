@@ -94,20 +94,32 @@ test('logical properties mirror the accent marker between LTR and RTL', async ({
 });
 
 test('directional icon mirrors in RTL', async ({ page }) => {
-  const arrowBox = async (locale: string) => {
+  const arrowStyle = async (locale: string) => {
     await openStory(page, 'foundations-writing-direction--logical-properties', locale);
     await page.getByText('2,450.00 TND').first().waitFor();
-    const svg = page.locator('svg').first();
-    const transform = await svg.evaluate((element) => getComputedStyle(element).transform);
-    return transform;
+
+    return page
+      .locator('svg')
+      .first()
+      .evaluate((element) => {
+        const style = getComputedStyle(element);
+        return { rotate: style.rotate, transform: style.transform };
+      });
   };
 
-  const ltrTransform = await arrowBox('en');
-  const rtlTransform = await arrowBox('ar-EG');
+  const ltr = await arrowStyle('en');
+  const rtl = await arrowStyle('ar-EG');
 
-  // rotate(180deg) resolves to a matrix with -1 on both axes.
-  expect(ltrTransform === 'none' || ltrTransform === 'matrix(1, 0, 0, 1, 0, 0)').toBe(true);
-  expect(rtlTransform).toContain('-1');
+  // Tailwind v4 mirrors with the `rotate` property; older output used a matrix
+  // transform. Accept either, but require that LTR is unrotated.
+  expect(['none', '0deg']).toContain(ltr.rotate);
+  expect(ltr.transform === 'none' || ltr.transform === 'matrix(1, 0, 0, 1, 0, 0)').toBe(true);
+
+  const mirrored = rtl.rotate === '180deg' || rtl.transform.includes('-1');
+  expect(
+    mirrored,
+    `expected a 180deg rotation, got rotate=${rtl.rotate} transform=${rtl.transform}`,
+  ).toBe(true);
 });
 
 test('RTL layout reflows at 320px without horizontal scrolling', async ({ page }) => {
