@@ -1,11 +1,11 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 
-/**
- * Stories live next to the code they document. `.mdx` pages hold the long-form
- * guidance (keyboard tables, ARIA contract, RTL notes) for each component.
- */
+// Stories live next to the code they document.
+// MDX docs pages are added by the documentation milestone; when the first one
+// lands, extend the stories glob with a `src/**/*.mdx` pattern. Until then the
+// pattern would match nothing and Storybook logs a warning on every start.
 const config: StorybookConfig = {
-  stories: ['../src/**/*.mdx', '../src/**/*.stories.@(ts|tsx)'],
+  stories: ['../src/**/*.stories.@(ts|tsx)'],
   addons: ['@storybook/addon-docs', '@storybook/addon-a11y'],
   framework: {
     name: '@storybook/react-vite',
