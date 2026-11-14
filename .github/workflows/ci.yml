@@ -39,10 +39,34 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Clippy — warnings are errors
-        run: cargo clippy --workspace --all-targets -- --deny warnings
+        id: clippy
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          cargo clippy --workspace --all-targets --message-format=short -- --deny warnings 2>&1 | tee clippy.log
 
       - name: Tests
-        run: cargo test --workspace --all-targets
+        id: tests
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          cargo test --workspace --all-targets 2>&1 | tee tests.log
+
+      - name: Report diagnostics
+        if: always()
+        run: |
+          {
+            echo "### clippy (\${{ steps.clippy.outcome }})"
+            echo '```'
+            tail -n 150 clippy.log 2>/dev/null || true
+            echo '```'
+            echo "### tests (\${{ steps.tests.outcome }})"
+            echo '```'
+            tail -n 150 tests.log 2>/dev/null || true
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+          test "\${{ steps.clippy.outcome }}" = "success"
+          test "\${{ steps.tests.outcome }}" = "success"
 
       - name: Release build
         run: cargo build --workspace --release
@@ -96,8 +120,12 @@ jobs:
       - name: Assets are served with the right content type
         run: |
           set -euo pipefail
-          curl -fsSI http://127.0.0.1:8080/assets/ui-storm.css | grep -qi "content-type: text/css"
-          curl -fsSI http://127.0.0.1:8080/assets/ui-storm.js | grep -qi "content-type: text/javascript"
+          css=$(curl -fsS -o /dev/null -w '%{content_type}' http://127.0.0.1:8080/assets/ui-storm.css)
+          js=$(curl -fsS -o /dev/null -w '%{content_type}' http://127.0.0.1:8080/assets/ui-storm.js)
+          echo "css: ${css}"
+          echo "js: ${js}"
+          [[ "${css}" == text/css* ]]
+          [[ "${js}" == text/javascript* ]]
 
       - name: Unknown pages are 404s
         run: |
@@ -129,7 +157,22 @@ jobs:
       # Playwright's webServer builds and runs the real gallery binary, so the
       # tests exercise exactly what a reviewer sees.
       - name: Run Playwright (axe, RTL, dark theme, keyboard, no-JS)
-        run: npx playwright test
+        id: playwright
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npx playwright test --reporter=line 2>&1 | tee playwright.log
+
+      - name: Report Playwright diagnostics
+        if: always()
+        run: |
+          {
+            echo "### playwright (\${{ steps.playwright.outcome }})"
+            echo '```'
+            grep -E "✘|Error|expect|Received|Expected|error" playwright.log | head -n 120 || true
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+          test "\${{ steps.playwright.outcome }}" = "success"
 
       - name: Upload report
         if: always()
