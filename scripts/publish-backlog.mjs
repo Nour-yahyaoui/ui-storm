@@ -50,17 +50,30 @@ async function api(path, { method = 'GET', body } = {}) {
   const url = path.startsWith('http') ? path : `https://api.github.com${path}`;
 
   for (let attempt = 1; attempt <= 6; attempt += 1) {
-    const response = await fetch(url, {
-      method,
-      headers: {
-        Authorization: `Bearer ${TOKEN}`,
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        'Content-Type': 'application/json',
-        'User-Agent': 'accessible-ui-lab-backlog',
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    let response;
+    try {
+      response = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${TOKEN}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          'Content-Type': 'application/json',
+          'User-Agent': 'accessible-ui-lab-backlog',
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+    } catch (error) {
+      const cause = error?.cause?.message ?? error.message;
+      if (String(cause).includes('certificate')) {
+        throw new Error(
+          `TLS verification failed (${cause}). This environment intercepts TLS; run with ` +
+            'NODE_EXTRA_CA_CERTS pointed at the system bundle, e.g. ' +
+            'NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt npm run backlog:publish',
+        );
+      }
+      throw new Error(`${method} ${path} failed: ${cause}`);
+    }
 
     if (response.ok) {
       if (response.status === 204) return null;
