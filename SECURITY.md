@@ -11,12 +11,13 @@ Include the affected version or commit, a reproduction, and the impact. If the i
 
 ## What counts as security-relevant here
 
-A component library has an unusual threat model. Examples that qualify:
+A server-rendered component library has an unusual threat model. Examples that qualify:
 
-- XSS through a prop that renders raw HTML or an unsanitised `href`
-- a focus trap or portal that leaks a private view after a dialog closes
-- a prop that writes attacker-controlled values into the DOM or a URL
-- a dependency with a known vulnerability that reaches the published bundle
+- XSS through a value that reaches markup unescaped, or a `PreEscaped` splice that accepts input
+- an `href` or `src` builder that allows a `javascript:` URL
+- a focus trap or modal that leaks a private view after a dialog closes
+- a form pattern in the library that invites cross-site request forgery
+- a dependency advisory that reaches the published crate
 - a release or publishing workflow weakness (provenance, tokens, protected branches)
 
 ## Response targets
@@ -26,6 +27,14 @@ A component library has an unusual threat model. Examples that qualify:
 | Critical     | 48 hours        | 7 days             |
 | High         | 3 days          | 30 days            |
 | Medium / Low | 7 days          | next minor release |
+
+## In the repository
+
+- `#![forbid(unsafe_code)]` in every crate.
+- Escaping is the default in Maud; `PreEscaped` is used in one place (the `<noscript>` style block)
+  and is covered by a test that asserts the stylesheet it inlines contains no markup.
+- `cargo-audit` and `cargo-deny` are wired into CI; see the `security` milestone in
+  `docs/backlog.md` for the remaining hardening work.
 
 ## Supported versions
 

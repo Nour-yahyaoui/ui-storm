@@ -1,0 +1,12 @@
+[package]
+name = "ui-storm"
+description = "Accessibility-first, RTL-native server-rendered components for Rust (Maud + Actix Web)."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+maud.workspace = true

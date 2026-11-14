@@ -1,36 +1,44 @@
-name: Feature or component proposal
-description: Propose a component, prop or capability
-title: '[proposal] '
-labels: ['type: feature', 'priority: p2']
+name: Feature request
+description: A component, prop or capability that is missing
+title: '[feature] '
+labels: ['type: feature', 'priority: p3']
 body:
   - type: markdown
     attributes:
       value: |
-        Before proposing a new component, check the roadmap in `docs/backlog.md` — most components already have a
-        milestone and a set of issues.
+        The backlog is generated from `scripts/build_backlog.py`. If this request matches an
+        existing issue, say so and the conversation can continue there.
 
   - type: textarea
     id: problem
     attributes:
-      label: What problem does this solve?
-      description: Describe the user need, including the Arabic/RTL angle if it applies.
+      label: The problem
+      description: What are you unable to build, and who is blocked by it?
     validations:
       required: true
 
-  - type: input
-    id: pattern
+  - type: textarea
+    id: proposal
     attributes:
-      label: Relevant WAI-ARIA APG pattern
-      placeholder: https://www.w3.org/WAI/ARIA/apg/patterns/…
+      label: Proposed API or behaviour
+      description: A builder call, the markup you would expect, and how it should behave in RTL and with no JavaScript.
+    validations:
+      required: true
 
   - type: textarea
-    id: keyboard
+    id: accessibility
     attributes:
-      label: Proposed keyboard interaction
-      description: If this is interactive, describe every key and what it does.
+      label: Accessibility impact
+      description: Which element and role would this use? What does it need from the keyboard, and what does a screen reader announce?
+    validations:
+      required: true
 
-  - type: textarea
-    id: alternatives
+  - type: checkboxes
+    id: checks
     attributes:
-      label: Alternatives considered
-      description: Existing components, libraries, or a simpler solution.
+      label: Before submitting
+      options:
+        - label: I checked `docs/backlog.md` for an existing issue.
+          required: true
+        - label: This is not a request to change the project's accessibility rules.
+          required: true

@@ -1,31 +1,32 @@
-## What and why
+## What changed
 
-<!-- Link the issue: Closes #123. Explain the user-facing effect, not the file changes. -->
+<!-- One or two sentences. Link the issue: "Closes #123". -->
 
-## Accessibility checklist
+## Why
 
-Everything here is required for component work. Delete the sections that do not apply and say why.
+<!-- The problem this solves. If it is a behaviour change, say what used to happen. -->
 
-- [ ] Keyboard: every interaction is reachable and operable without a pointer, and focus is visible
-- [ ] Screen reader: names, roles and states are correct (axe passes, plus a manual pass where relevant)
-- [ ] RTL: logical properties only; the Arabic story renders without clipping or broken wrapping
-- [ ] Contrast: no new color pair below its WCAG threshold (`npm run test:contrast`)
-- [ ] Reduced motion: animation collapses or is skippable
-- [ ] Target size: interactive elements are at least 44×44 CSS pixels or documented as exempt
+## Accessibility impact
 
-## Tests
+<!--
+Every change has one. Delete what does not apply.
+-->
 
-- [ ] Unit tests added or updated (LTR and RTL)
-- [ ] Playwright spec added or updated for the keyboard path
-- [ ] Storybook stories updated (states, RTL, dark mode)
-- [ ] `npm run verify` passes locally
+- [ ] Names, roles and relationships: unchanged / checked, because …
+- [ ] Keyboard: reachable, operable, focus visible, no new focus trap
+- [ ] Direction: logical properties only, checked with `?lang=ar`
+- [ ] Contrast: no colour outside the tokens, audit passes in both themes
+- [ ] No-JavaScript behaviour: still readable and operable
+- [ ] Motion: nothing depends on animation, reduced-motion honoured
 
-## Documentation
+## Checks
 
-- [ ] Docs page updated, including keyboard table and ARIA contract
-- [ ] Changeset added (`npm run changeset` or the file is included) when user-facing
-- [ ] Breaking change? Labelled `breaking-change` and migration notes written
+- [ ] `cargo fmt --all -- --check`
+- [ ] `cargo clippy --workspace --all-targets -- --deny warnings`
+- [ ] `cargo test --workspace`
+- [ ] `npx playwright test`
+- [ ] `python3 scripts/build_backlog.py --check`
 
-## Screenshots
+## Screenshots or markup
 
-<!-- Required for visual changes: LTR and RTL, light and dark. -->
+<!-- Before and after, in both directions if the layout changed. -->

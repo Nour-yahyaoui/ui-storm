@@ -1,0 +1,20 @@
+[workspace]
+members = ["crates/ui-storm", "crates/ui-storm-web"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+rust-version = "1.82"
+authors = ["Nour Yahyaoui"]
+repository = "https://github.com/Nour-yahyaoui/ui-storm"
+
+[workspace.dependencies]
+maud = "0.27"
+actix-web = "4"
+serde = { version = "1", features = ["derive"] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

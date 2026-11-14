@@ -1,0 +1,16 @@
+[package]
+name = "ui-storm-web"
+description = "The ui-storm component gallery and documentation site."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+actix-web.workspace = true
+maud.workspace = true
+serde.workspace = true
+ui-storm = { path = "../ui-storm", version = "0.1.0" }

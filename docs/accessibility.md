@@ -1,65 +1,114 @@
-# Accessibility
+# Accessibility statement
 
-Target: **WCAG 2.2 Level AA**, with selected AAA practices (44px targets, 7:1 body text in the light theme).
+This document states what ui-storm guarantees, how each guarantee is checked, and what is
+deliberately left to human review. It is written to be falsifiable: every claim below names the
+mechanism that would catch its violation.
 
-This page states what is verified, how, and what is not yet verified. It is deliberately specific: "accessible" is a claim, and claims need evidence.
+## Target
 
-## What is automated
+WCAG 2.2 level AA, plus the parts of AAA that cost nothing in a component library (visible labels,
+no colour-only information, 44px touch targets on small controls).
 
-| Check                                | Where                                                  | What it cannot see             |
-| ------------------------------------ | ------------------------------------------------------ | ------------------------------ |
-| WCAG A/AA rule set (axe-core)        | `src/**/*.test.tsx` via `expectNoA11yViolations`       | contrast, layout, focus order  |
-| WCAG A/AA rule set in a real browser | `tests/e2e/foundations-a11y.spec.ts`, LTR + RTL + dark | screen reader output, meaning  |
-| Token contrast ratios                | `scripts/check-contrast.mjs`, 14 pairs × 2 themes      | rendered compositing, images   |
-| Direction geometry and 320px reflow  | Playwright bounding boxes and scroll width             | content readability            |
-| Accessible names/roles/states        | axe + explicit assertions                              | whether the name is _useful_   |
-| Keyboard paths                       | Playwright per component (as components land)          | whether the model is learnable |
+## Guarantees
 
-**Contrast is never checked in jsdom.** `src/test-utils/axe.ts` explicitly skips `color-contrast` and `target-size` because jsdom has no layout engine; those rules run only in the Playwright suite. Skipping them silently would make every green run a lie.
+### Names are required by construction
 
-## What requires a human
+An input cannot be rendered without a label; an icon button cannot be rendered without a name. The
+signature rejects the broken version, so this is a compile error rather than a review comment.
 
-- Screen reader output on VoiceOver, NVDA and TalkBack, in English **and Arabic**.
-- Whether the reading order matches the visual order in complex layouts.
-- Whether error messages explain the fix.
-- Whether a keyboard user can complete a task without instruction.
-- Whether Arabic text with diacritics is legible at the shipped sizes.
+*Checked by:* the type system, plus markup assertions in `crates/ui-storm/tests/components.rs`.
 
-These are tracked as per-component issues (`a11y-sr-matrix`, `rtl-screen-reader-matrix`) and are recorded in the issue, not just in a release note.
+### Contrast is computed, not eyeballed
 
-## Current evidence
+Every text pair the components use meets 4.5:1; every boundary, fill and focus ring meets 3:1, in
+both themes. Ratios are computed with the WCAG 2.2 relative-luminance formula from the values the
+stylesheet actually ships.
 
-At foundation stage, the following is proven by the repository:
+*Checked by:* `crates/ui-storm/src/tokens.rs`, which fails the build with the measured ratio in the
+message. The gallery's foundations page shows the same table.
 
-- 69 unit tests pass, including two that assert the axe harness itself catches a missing `alt` and an unlabelled input.
-- 28 token contrast checks pass in light and dark themes (body text 17.85:1 light / 16.96:1 dark on surface; control borders 4.76:1 / 6.92:1).
-- Direction resolution is tested for 13 locales plus script-subtag overrides.
-- Tab-order utilities are tested for positive `tabindex` ordering, `inert`, `aria-hidden`, disabled fieldsets and hidden elements.
-- The browser suite (CI only) scans every foundation story in LTR, RTL and dark mode and asserts RTL geometry and 320px reflow.
+### The palette has one source
 
-Not yet proven, because the components do not exist: per-component keyboard and screen reader sign-off, forced-colors rendering of component surfaces, and the ACR.
+The stylesheet and the Rust token table are compared as ordered lists on every test run. A colour
+added to one and not the other is a build failure, not a drift nobody notices for six months.
 
-## Known limitations
+*Checked by:* `stylesheet_palette_matches_the_rust_tokens`.
 
-| Limitation                                 | Impact                                            | Tracking                   |
-| ------------------------------------------ | ------------------------------------------------- | -------------------------- |
-| No screen reader matrix yet                | component semantics are unverified for real users | `a11y-sr-matrix`           |
-| Forced-colors verified at token level only | component borders may still vanish                | `a11y-forced-colors`       |
-| No component-level reflow evidence         | dense tables may scroll horizontally              | `a11y-reflow`              |
-| No ACR/VPAT                                | procurement teams cannot file it                  | `a11y-acr`                 |
-| Arabic screen reader behaviour untested    | RTL announcements may be wrong                    | `rtl-screen-reader-matrix` |
+### State is never carried by colour alone
+
+Errors carry text and `aria-invalid`; loading carries `aria-busy` and words; selection carries
+`aria-selected`; required carries native `required` plus visually hidden words.
+
+*Checked by:* the markup contract tests, and axe in the browser run.
+
+### Focus is always visible
+
+One ring for the whole library: 3px, offset 2px, in the accent colour, audited against every surface
+it can land on. `:focus-visible` is used, so pointer users do not see it, but no component ever sets
+`outline: none`.
+
+*Checked by:* the contrast audit for the colour, and `tests/e2e/keyboard.spec.ts` for the behaviour.
+
+### Content does not depend on JavaScript
+
+Markup is complete before any script runs. With scripting disabled, tab panels are revealed by a
+`<noscript>` rule in the page head, dialogs remain closed but their content is not the only route to
+anything, and every form still submits.
+
+*Checked by:* the Playwright run with `javaScriptEnabled: false`.
+
+### Right-to-left is structural
+
+The stylesheet contains no physical property: no `left`, no `right`, no `margin-left`, no
+`text-align: left`. The test fails the build on any of them. Mirroring is a property of the layout,
+not a second stylesheet.
+
+*Checked by:* `stylesheet_uses_only_logical_properties`, and the axe and geometry runs with
+`?lang=ar`.
+
+### Motion is optional
+
+Every transition and animation is disabled under `prefers-reduced-motion: reduce`, including the
+button spinner. No state is communicated by movement alone.
+
+*Checked by:* the reduced-motion block in the stylesheet and the contrast-independent loading text.
+
+### Structure is machine-checkable
+
+Every page has exactly one `h1`, a skip link pointing at a focusable `main`, landmarks, and a
+language and direction on `<html>`.
+
+*Checked by:* `crates/ui-storm-web/tests/gallery.rs` and `tests/e2e/gallery.spec.ts`.
+
+## What is reviewed by hand
+
+axe catches roughly a third of real-world issues. These are not automated, and are reviewed per
+release:
+
+| Area | What a human checks |
+| --- | --- |
+| Name quality | A name can be present and still useless ("button", "icon", "×"). |
+| Order | The DOM order matches the visual order, in both directions. |
+| Announcements | Whether a live region announcement arrives at the right moment, once. |
+| Reading flow | Whether the content makes sense read linearly, as a screen reader does. |
+| Zoom and reflow | 200% zoom and 320px width remain usable, not just non-overflowing. |
+| Pointer targets | Minimum target size at the smallest breakpoint, on a touch device. |
+
+The manual matrix is tracked as a backlog issue in the `testing` milestone: NVDA with Firefox,
+VoiceOver with Safari, TalkBack with Chrome on Android.
+
+## Known limits
+
+- The gallery is not a screen-reader conformance suite; see above.
+- The visible strings the library renders itself ("Close dialog", "Loading", "(required)") are
+  English by default and injectable per component. Localising them across every component at once is
+  a backlog item.
+- The dialog's initial focus is the first focusable element. For destructive dialogs, order the
+  actions so the safe one comes first; an explicit initial-focus option is planned.
+- Determinate progress and toast timing are not announced in a way that survives an assertive
+  interruption yet; both components are still planned.
 
 ## Reporting a barrier
 
-Use the **Accessibility barrier** issue template. Include the assistive technology and versions, the steps, and the WCAG criterion if you know it. Reports from disabled users are prioritised over general bugs.
-
-If the barrier is a security issue (for example a focus trap that exposes a private view), use the process in `SECURITY.md`.
-
-## Principles behind the component contracts
-
-1. **Prefer native semantics.** A native `button`, `input` or `fieldset` beats a div with roles, because browsers, screen readers and form APIs already agree about it.
-2. **Never convey meaning with color alone.** Every status carries text; icons are supplementary.
-3. **Disabled controls stay discoverable where possible.** Native `disabled` removes controls from the tab order and from screen reader discovery; `aria-disabled` is the default for actions, with documented exceptions.
-4. **Focus is a contract.** Opening, closing, and removing content must move focus deliberately — never leave it on `body`.
-5. **Announce once.** Duplicate live-region messages are as bad as silence.
-6. **No keyboard traps outside modals.** If an overlay traps focus, Escape must have a defined behaviour.
+Use the accessibility issue template. Barrier reports are triaged with the same urgency as security
+reports, and the fix ships with a test that would have caught it.

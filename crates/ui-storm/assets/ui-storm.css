@@ -1,0 +1,737 @@
+/*
+ * ui-storm — the only stylesheet.
+ *
+ * Three invariants hold everywhere in this file:
+ *   1. Logical properties only. There is no `margin-left`, no `left`, no
+ *      `border-right`, no `text-align: left`. A component that needs to be
+ *      mirrored uses `inline-start` / `inline-end` and is correct in both
+ *      directions with no `[dir="rtl"]` override.
+ *   2. Colour comes from the tokens below, which `src/tokens.rs` checks for
+ *      contrast and for drift. No component invents a colour.
+ *   3. Motion is optional. Every transition and animation is disabled under
+ *      `prefers-reduced-motion: reduce`.
+ */
+
+/* ---------------------------------------------------------------- palette */
+/* Kept in sync with LIGHT in src/tokens.rs — `stylesheet_palette_matches_the_rust_tokens`
+   fails the build if the two lists diverge, by name or by value. */
+:root {
+  --ui-color-bg: #ffffff;
+  --ui-color-surface: #f4f5f7;
+  --ui-color-text: #14161a;
+  --ui-color-muted: #4d5563;
+  --ui-color-border: #c2c7d0;
+  --ui-color-border-strong: #69707d;
+  --ui-color-accent: #1d4ed8;
+  --ui-color-accent-hover: #1e40af;
+  --ui-color-on-accent: #ffffff;
+  --ui-color-danger: #b42318;
+  --ui-color-on-danger: #ffffff;
+  --ui-color-success: #067647;
+  --ui-color-focus: #1d4ed8;
+
+  /* Scale tokens: mirrored into this same block so one parser reads them all. */
+  --ui-font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans",
+    "Noto Sans Arabic", "Noto Kufi Arabic", sans-serif;
+  --ui-font-size-xs: 0.75rem;
+  --ui-font-size-sm: 0.875rem;
+  --ui-font-size-md: 1rem;
+  --ui-font-size-lg: 1.25rem;
+  --ui-font-size-xl: 1.5rem;
+  --ui-font-size-2xl: 2rem;
+  --ui-leading-tight: 1.25;
+  --ui-leading-normal: 1.6;
+  --ui-space-1: 0.25rem;
+  --ui-space-2: 0.5rem;
+  --ui-space-3: 0.75rem;
+  --ui-space-4: 1rem;
+  --ui-space-5: 1.5rem;
+  --ui-space-6: 2rem;
+  --ui-space-7: 3rem;
+  --ui-radius-sm: 6px;
+  --ui-radius-md: 10px;
+  --ui-radius-lg: 16px;
+  --ui-radius-pill: 999px;
+  --ui-border-width: 1px;
+  --ui-focus-width: 3px;
+  --ui-focus-offset: 2px;
+  --ui-duration: 120ms;
+  --ui-control-height-sm: 2rem;
+  --ui-control-height-md: 2.5rem;
+  --ui-control-height-lg: 3rem;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --ui-color-bg: #0e1014;
+  --ui-color-surface: #171a21;
+  --ui-color-text: #f1f3f7;
+  --ui-color-muted: #aeb6c3;
+  --ui-color-border: #333a45;
+  --ui-color-border-strong: #8a93a1;
+  --ui-color-accent: #8fb3ff;
+  --ui-color-accent-hover: #b3caff;
+  --ui-color-on-accent: #0b1020;
+  --ui-color-danger: #ffb4ab;
+  --ui-color-on-danger: #3c0a06;
+  --ui-color-success: #75e0a7;
+  --ui-color-focus: #8fb3ff;
+  color-scheme: dark;
+}
+
+
+/* ------------------------------------------------------------------- base */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Never clip a zoomed font. */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  overflow-wrap: break-word;
+  background: var(--ui-color-bg);
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-sans);
+  font-size: var(--ui-font-size-md);
+  line-height: var(--ui-leading-normal);
+}
+
+:where(a) {
+  color: var(--ui-color-accent);
+  text-underline-offset: 0.2em;
+}
+
+/* One focus ring for the whole library, in the accent colour, on top of any
+   background the control happens to sit on. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
+}
+
+/* Hide the ring for pointer users, never for keyboard users. */
+:where(button, [role="tab"]):focus:not(:focus-visible) {
+  outline: none;
+}
+
+.ui-visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin-block: -1px;
+  margin-inline: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Keyboard users get to skip the gallery navigation. */
+.ui-skip-link {
+  position: absolute;
+  inset-block-start: var(--ui-space-2);
+  inset-inline-start: var(--ui-space-2);
+  z-index: 10;
+  padding-block: var(--ui-space-2);
+  padding-inline: var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text);
+  transform: translateY(-200%);
+}
+
+.ui-skip-link:focus-visible {
+  transform: none;
+}
+
+/* ----------------------------------------------------------------- button */
+.ui-button {
+  --ui-button-bg: var(--ui-color-surface);
+  --ui-button-fg: var(--ui-color-text);
+  --ui-button-border: var(--ui-color-border-strong);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-2);
+  min-block-size: var(--ui-control-height-md);
+  padding-block: var(--ui-space-2);
+  padding-inline: var(--ui-space-4);
+  border: var(--ui-border-width) solid var(--ui-button-border);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-button-bg);
+  color: var(--ui-button-fg);
+  font-family: inherit;
+  font-size: var(--ui-font-size-md);
+  line-height: var(--ui-leading-tight);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--ui-duration) ease-in-out,
+    border-color var(--ui-duration) ease-in-out;
+}
+
+.ui-button--primary {
+  --ui-button-bg: var(--ui-color-accent);
+  --ui-button-fg: var(--ui-color-on-accent);
+  --ui-button-border: var(--ui-color-accent);
+}
+
+.ui-button--primary:hover:not(:disabled) {
+  --ui-button-bg: var(--ui-color-accent-hover);
+  --ui-button-border: var(--ui-color-accent-hover);
+}
+
+.ui-button--secondary:hover:not(:disabled) {
+  --ui-button-bg: color-mix(in srgb, var(--ui-color-text) 6%, var(--ui-color-surface));
+}
+
+.ui-button--ghost {
+  --ui-button-bg: transparent;
+  --ui-button-border: transparent;
+}
+
+.ui-button--ghost:hover:not(:disabled) {
+  --ui-button-bg: var(--ui-color-surface);
+  --ui-button-border: var(--ui-color-border);
+}
+
+.ui-button--danger {
+  --ui-button-bg: var(--ui-color-danger);
+  --ui-button-fg: var(--ui-color-on-danger);
+  --ui-button-border: var(--ui-color-danger);
+}
+
+.ui-button--sm {
+  min-block-size: var(--ui-control-height-sm);
+  padding-inline: var(--ui-space-3);
+  font-size: var(--ui-font-size-sm);
+}
+
+.ui-button--lg {
+  min-block-size: var(--ui-control-height-lg);
+  padding-inline: var(--ui-space-5);
+  font-size: var(--ui-font-size-lg);
+}
+
+.ui-button--full {
+  inline-size: 100%;
+}
+
+.ui-button:disabled,
+.ui-icon-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* A disabled-but-focusable button keeps its normal contrast; the state comes
+   from aria-disabled and the label, not from a washed-out colour. */
+.ui-button[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+.ui-button__spinner {
+  inline-size: 1em;
+  block-size: 1em;
+  border: 2px solid currentColor;
+  border-block-start-color: transparent;
+  border-radius: var(--ui-radius-pill);
+  animation: ui-spin 700ms linear infinite;
+}
+
+@keyframes ui-spin {
+  to {
+    rotate: 1turn;
+  }
+}
+
+.ui-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: var(--ui-control-height-md);
+  min-block-size: var(--ui-control-height-md);
+  padding: 0;
+  border: var(--ui-border-width) solid var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-lg);
+  cursor: pointer;
+}
+
+.ui-icon-button__glyph {
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Directional glyphs (arrows, chevrons, "next") point the same way the user
+   reads. Non-directional glyphs (a magnifier, a trash can) are never flipped. */
+[dir="rtl"] .ui-icon--directional {
+  scale: -1 1;
+}
+
+/* ------------------------------------------------------------------ field */
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  margin-block-end: var(--ui-space-4);
+  max-inline-size: 32rem;
+}
+
+.ui-field__label {
+  font-size: var(--ui-font-size-sm);
+  font-weight: 600;
+  color: var(--ui-color-text);
+}
+
+.ui-field__required {
+  color: var(--ui-color-danger);
+  margin-inline-start: var(--ui-space-1);
+}
+
+.ui-field__description {
+  margin: 0;
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-muted);
+}
+
+.ui-field__error {
+  margin: 0;
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-danger);
+}
+
+.ui-input {
+  min-block-size: var(--ui-control-height-md);
+  padding-block: var(--ui-space-2);
+  padding-inline: var(--ui-space-3);
+  border: var(--ui-border-width) solid var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-color-bg);
+  color: var(--ui-color-text);
+  font-family: inherit;
+  font-size: var(--ui-font-size-md);
+}
+
+.ui-input::placeholder {
+  color: var(--ui-color-muted);
+  opacity: 1;
+}
+
+.ui-input[aria-invalid="true"] {
+  border-color: var(--ui-color-danger);
+}
+
+.ui-input:disabled {
+  background: var(--ui-color-surface);
+  cursor: not-allowed;
+}
+
+/* Technically the boundary is darker than 3:1 only because border-strong is;
+   this keeps the field legible when the surface is the background. */
+.ui-input:hover:not(:disabled) {
+  border-color: var(--ui-color-text);
+}
+
+/* --------------------------------------------------------------- checkbox */
+.ui-checkbox__control {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+
+.ui-checkbox__input {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin: 0;
+  accent-color: var(--ui-color-accent);
+}
+
+.ui-checkbox__label {
+  font-size: var(--ui-font-size-md);
+}
+
+/* ----------------------------------------------------------------- dialog */
+.ui-dialog {
+  max-inline-size: min(34rem, calc(100vw - 2 * var(--ui-space-4)));
+  padding: 0;
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-color-bg);
+  color: var(--ui-color-text);
+}
+
+.ui-dialog::backdrop {
+  background: rgb(0 0 0 / 55%);
+}
+
+.ui-dialog__panel {
+  padding-block: var(--ui-space-5);
+  padding-inline: var(--ui-space-5);
+}
+
+.ui-dialog__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+  margin-block-end: var(--ui-space-3);
+}
+
+.ui-dialog__title {
+  margin: 0;
+  font-size: var(--ui-font-size-lg);
+  line-height: var(--ui-leading-tight);
+}
+
+.ui-dialog__description {
+  margin-block: 0 var(--ui-space-3);
+  color: var(--ui-color-muted);
+  font-size: var(--ui-font-size-sm);
+}
+
+/* ------------------------------------------------------------------- tabs */
+.ui-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+}
+
+.ui-tabs[data-ui-tabs-orientation="vertical"] {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.ui-tabs__list {
+  display: flex;
+  gap: var(--ui-space-1);
+  border-block-end: var(--ui-border-width) solid var(--ui-color-border);
+  /* A long tab list scrolls inside its own box rather than widening the page. */
+  overflow-x: auto;
+}
+
+.ui-tabs[data-ui-tabs-orientation="vertical"] .ui-tabs__list {
+  flex-direction: column;
+  border-block-end: 0;
+  border-inline-end: var(--ui-border-width) solid var(--ui-color-border);
+  padding-inline-end: var(--ui-space-2);
+}
+
+.ui-tabs__tab {
+  padding-block: var(--ui-space-2);
+  padding-inline: var(--ui-space-3);
+  border: 0;
+  border-block-end: 2px solid transparent;
+  background: none;
+  color: var(--ui-color-muted);
+  font-family: inherit;
+  font-size: var(--ui-font-size-md);
+  cursor: pointer;
+}
+
+.ui-tabs__tab[aria-selected="true"] {
+  color: var(--ui-color-text);
+  border-block-end-color: var(--ui-color-accent);
+  font-weight: 600;
+}
+
+.ui-tabs__tab:hover:not([aria-selected="true"]) {
+  color: var(--ui-color-text);
+  background: var(--ui-color-surface);
+}
+
+.ui-tabs__panel {
+  padding-block: var(--ui-space-2);
+}
+
+/* The panels carry `hidden`, which the platform honours with no CSS from us.
+   Pages also ship a <noscript> rule that un-hides every panel, so with
+   JavaScript disabled the content is all still readable — the correct
+   degradation for tabs, whose panels are content rather than chrome. */
+
+/* ---------------------------------------------------------------- gallery */
+.ui-gallery {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100vh;
+}
+
+.ui-gallery__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-4);
+  padding-block: var(--ui-space-4);
+  padding-inline: var(--ui-space-5);
+  border-block-end: var(--ui-border-width) solid var(--ui-color-border);
+  background: var(--ui-color-surface);
+}
+
+.ui-gallery__brand {
+  font-size: var(--ui-font-size-lg);
+  font-weight: 700;
+  margin: 0;
+  margin-inline-end: auto;
+  letter-spacing: -0.01em;
+}
+
+.ui-gallery__nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-gallery__nav a {
+  color: var(--ui-color-muted);
+  text-decoration: none;
+  font-size: var(--ui-font-size-sm);
+}
+
+.ui-gallery__nav a[aria-current="page"] {
+  color: var(--ui-color-text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.ui-gallery__main {
+  inline-size: min(64rem, 100%);
+  margin-inline: auto;
+  padding-block: var(--ui-space-6);
+  padding-inline: var(--ui-space-5);
+  flex: 1;
+}
+
+.ui-gallery__footer {
+  padding-block: var(--ui-space-4);
+  padding-inline: var(--ui-space-5);
+  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+  color: var(--ui-color-muted);
+  font-size: var(--ui-font-size-sm);
+}
+
+.ui-prose h1 {
+  font-size: var(--ui-font-size-2xl);
+  line-height: var(--ui-leading-tight);
+  margin-block: 0 var(--ui-space-3);
+  letter-spacing: -0.02em;
+}
+
+.ui-prose h2 {
+  font-size: var(--ui-font-size-xl);
+  line-height: var(--ui-leading-tight);
+  margin-block: var(--ui-space-6) var(--ui-space-3);
+}
+
+.ui-prose h3 {
+  font-size: var(--ui-font-size-lg);
+  margin-block: var(--ui-space-5) var(--ui-space-2);
+}
+
+.ui-prose p,
+.ui-prose li {
+  max-inline-size: 68ch;
+  color: var(--ui-color-text);
+}
+
+.ui-prose code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 0.9em;
+  padding-block: 0.1em;
+  padding-inline: 0.35em;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-color-surface);
+}
+
+.ui-demo {
+  margin-block: var(--ui-space-4) var(--ui-space-6);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  overflow: hidden;
+}
+
+.ui-demo__canvas {
+  padding-block: var(--ui-space-5);
+  padding-inline: var(--ui-space-5);
+  background: var(--ui-color-bg);
+}
+
+.ui-demo__caption {
+  padding-block: var(--ui-space-3);
+  padding-inline: var(--ui-space-5);
+  margin: 0;
+  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+  background: var(--ui-color-surface);
+  color: var(--ui-color-muted);
+  font-size: var(--ui-font-size-sm);
+}
+
+.ui-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-3);
+}
+
+.ui-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--ui-space-3);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.ui-swatch {
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  overflow: hidden;
+}
+
+.ui-swatch__chip {
+  block-size: 3rem;
+}
+
+.ui-swatch__meta {
+  padding-block: var(--ui-space-2);
+  padding-inline: var(--ui-space-3);
+  font-size: var(--ui-font-size-xs);
+  background: var(--ui-color-surface);
+}
+
+.ui-swatch__name {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.ui-table {
+  /* Wide tables scroll inside their own box; the page never gains a horizontal
+     scrollbar because of documentation content. */
+  display: block;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: var(--ui-font-size-sm);
+}
+
+.ui-table caption {
+  text-align: start;
+  margin-block-end: var(--ui-space-2);
+  color: var(--ui-color-muted);
+}
+
+.ui-table th,
+.ui-table td {
+  text-align: start;
+  padding-block: var(--ui-space-2);
+  padding-inline: var(--ui-space-3);
+  border-block-end: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.ui-pass {
+  color: var(--ui-color-success);
+  font-weight: 600;
+}
+
+.ui-badge {
+  display: inline-block;
+  padding-block: 0.15em;
+  padding-inline: 0.6em;
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-surface);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  color: var(--ui-color-muted);
+  font-size: var(--ui-font-size-xs);
+}
+
+.ui-notice {
+  padding-block: var(--ui-space-3);
+  padding-inline: var(--ui-space-4);
+  margin-block: var(--ui-space-4);
+  border-radius: var(--ui-radius-md);
+  border: var(--ui-border-width) solid var(--ui-color-border-strong);
+  background: var(--ui-color-surface);
+}
+
+.ui-code {
+  margin-block: var(--ui-space-3);
+  padding-block: var(--ui-space-3);
+  padding-inline: var(--ui-space-4);
+  overflow-x: auto;
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--ui-font-size-sm);
+  line-height: 1.5;
+  tab-size: 2;
+}
+
+.ui-kbd {
+  display: inline-block;
+  min-inline-size: 1.6em;
+  padding-block: 0.1em;
+  padding-inline: 0.4em;
+  border: var(--ui-border-width) solid var(--ui-color-border-strong);
+  border-block-end-width: 2px;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-color-bg);
+  color: var(--ui-color-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--ui-font-size-xs);
+  text-align: center;
+}
+
+.ui-contract {
+  margin-block: var(--ui-space-3);
+  padding-inline-start: var(--ui-space-5);
+}
+
+.ui-contract li {
+  margin-block-end: var(--ui-space-2);
+}
+
+.ui-lede {
+  font-size: var(--ui-font-size-lg);
+  color: var(--ui-color-muted);
+  max-inline-size: 60ch;
+}
+
+/* --------------------------------------------------------------- motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Forced colours: keep the system palette, keep every boundary. */
+@media (forced-colors: active) {
+  .ui-button,
+  .ui-input,
+  .ui-icon-button,
+  .ui-tabs__tab {
+    border-color: CanvasText;
+  }
+
+  .ui-tabs__tab[aria-selected="true"] {
+    border-block-end-color: Highlight;
+  }
+}

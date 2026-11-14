@@ -14,101 +14,217 @@ permissions:
   contents: read
 
 env:
-  NEXT_TELEMETRY_DISABLED: 1
-  STORYBOOK_DISABLE_TELEMETRY: 1
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
 
 jobs:
-  quality:
-    name: Types, lint, unit tests
+  rust:
+    name: Format, lints, tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          node-version: 22
-          cache: npm
+          components: rustfmt, clippy
 
-      - run: npm ci
+      - uses: Swatinem/rust-cache@v2
 
-      - name: Formatting
-        run: npm run format:check
+      # Reported rather than blocking: rustfmt output varies between toolchain
+      # patch releases, and a formatting diff should never hide a failing test.
+      - name: Formatting (report only)
+        continue-on-error: true
+        run: cargo fmt --all -- --check
 
-      - name: Lint (includes jsx-a11y)
-        run: npm run lint
+      - name: Clippy — warnings are errors
+        id: clippy
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          cargo clippy --workspace --all-targets --message-format=short -- --deny warnings 2>&1 | tee clippy.log
 
-      - name: Types
-        run: npm run typecheck
+      - name: Tests
+        id: tests
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          cargo test --workspace --all-targets 2>&1 | tee tests.log
 
-      - name: Unit tests and WCAG A/AA assertions
-        run: npm run test:coverage
-
-      - name: Token contrast checks
-        run: npm run test:contrast
-
-      - name: Library build
-        run: npm run build
-
-      - name: Backlog is in sync with its generators
-        run: npm run backlog:check
-
-      - name: Upload coverage
+      - name: Report diagnostics
         if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: coverage
-          path: coverage/
-          retention-days: 7
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "### clippy (${{ steps.clippy.outcome }})"
+            echo '```'
+            tail -n 120 clippy.log 2>/dev/null || true
+            echo '```'
+            echo "### tests (${{ steps.tests.outcome }})"
+            echo '```'
+            tail -n 120 tests.log 2>/dev/null || true
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
 
-  storybook:
-    name: Storybook build
+          if [ "${{ github.event_name }}" = "pull_request" ] &&
+             { [ "${{ steps.clippy.outcome }}" != "success" ] || [ "${{ steps.tests.outcome }}" != "success" ]; }; then
+            {
+              echo "### Rust diagnostics"
+              echo '#### clippy'
+              echo '```'
+              tail -n 120 clippy.log 2>/dev/null || true
+              echo '```'
+              echo '#### tests'
+              echo '```'
+              tail -n 160 tests.log 2>/dev/null || true
+              echo '```'
+            } > rust-report.md
+            gh pr comment "${{ github.event.pull_request.number }}" --body-file rust-report.md
+          fi
+
+          test "${{ steps.clippy.outcome }}" = "success"
+          test "${{ steps.tests.outcome }}" = "success"
+
+      - name: Release build
+        run: cargo build --workspace --release
+
+  backlog:
+    name: Backlog is in sync with its generator
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Regenerate and compare
+        run: python3 scripts/build_backlog.py --check
+
+  gallery:
+    name: Gallery smoke test
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run build:storybook
-      - uses: actions/upload-artifact@v7
-        with:
-          name: storybook-static
-          path: storybook-static/
-          retention-days: 7
+      - uses: actions/checkout@v5
 
-  e2e:
-    name: Browser accessibility tests
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build and start the gallery
+        run: |
+          cargo build --package ui-storm-web
+          ./target/debug/ui-storm-web &
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8080/healthz > /dev/null; then
+              echo "gallery is up after ${attempt}s"
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8080/healthz
+
+      - name: Every page answers with HTML
+        run: |
+          set -euo pipefail
+          for path in / /foundations /accessibility /rtl \
+            /components/button /components/icon-button /components/text-input \
+            /components/checkbox /components/dialog /components/tabs; do
+            body=$(curl -fsS "http://127.0.0.1:8080${path}")
+            grep -q "<!DOCTYPE html>" <<<"${body}"
+            grep -q "<h1" <<<"${body}"
+            echo "ok ${path}"
+          done
+
+      - name: Assets are served with the right content type
+        run: |
+          set -euo pipefail
+          css=$(curl -fsS -o /dev/null -w '%{content_type}' http://127.0.0.1:8080/assets/ui-storm.css)
+          js=$(curl -fsS -o /dev/null -w '%{content_type}' http://127.0.0.1:8080/assets/ui-storm.js)
+          echo "css: ${css}"
+          echo "js: ${js}"
+          [[ "${css}" == text/css* ]]
+          [[ "${js}" == text/javascript* ]]
+
+      - name: Unknown pages are 404s
+        run: |
+          set -euo pipefail
+          status=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/components/date-picker)
+          test "${status}" = "404"
+
+  accessibility:
+    name: Browser accessibility (axe + keyboard)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
+
       - run: npm ci
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      # The Playwright webServer builds and serves Storybook, so the tests run
-      # against the same artifact that is deployed and reviewed.
-      - name: Run Playwright (axe, RTL geometry, dark mode, 320px reflow)
-        run: npx playwright test
+      # Playwright's webServer builds and runs the real gallery binary, so the
+      # tests exercise exactly what a reviewer sees.
+      - name: Run Playwright (axe, RTL, dark theme, keyboard, no-JS)
+        id: playwright
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npx playwright test --reporter=line 2>&1 | tee playwright.log
 
-      - name: Upload Playwright report
+      - name: Report diagnostics
         if: always()
-        uses: actions/upload-artifact@v7
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "### playwright (${{ steps.playwright.outcome }})"
+            echo '```'
+            tail -n 200 playwright.log 2>/dev/null || true
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          if [ "${{ github.event_name }}" = "pull_request" ] &&
+             [ "${{ steps.playwright.outcome }}" != "success" ]; then
+            {
+              echo "### Playwright diagnostics"
+              echo '```'
+              tail -n 250 playwright.log 2>/dev/null || true
+              echo '```'
+            } > playwright-report.md
+            gh pr comment "${{ github.event.pull_request.number }}" --body-file playwright-report.md
+          fi
+
+          test "${{ steps.playwright.outcome }}" = "success"
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
 
-      - name: Upload failure traces and screenshots
+      - name: Upload traces
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-traces
           path: test-results/
