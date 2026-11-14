@@ -23,10 +23,13 @@ fn demo(canvas: Markup, caption: &str) -> Markup {
     }
 }
 
-/// A syntax-highlighted-by-nobody code block.
+/// A plain code block.
+///
+/// `tabindex="0"` is not decoration: a block that can scroll horizontally must
+/// be reachable by keyboard, or its overflow is invisible to keyboard users.
 fn code(source: &str) -> Markup {
     html! {
-        pre class="ui-code" { code { (source) } }
+        pre class="ui-code" tabindex="0" { code { (source) } }
     }
 }
 

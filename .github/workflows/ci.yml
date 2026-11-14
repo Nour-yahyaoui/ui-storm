@@ -22,6 +22,9 @@ jobs:
     name: Format, lints, tests
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v5
 
@@ -54,29 +57,38 @@ jobs:
 
       - name: Report diagnostics
         if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           {
-            echo "### clippy (\${{ steps.clippy.outcome }})"
+            echo "### clippy (${{ steps.clippy.outcome }})"
             echo '```'
-            tail -n 150 clippy.log 2>/dev/null || true
+            tail -n 120 clippy.log 2>/dev/null || true
             echo '```'
-            echo "### tests (\${{ steps.tests.outcome }})"
+            echo "### tests (${{ steps.tests.outcome }})"
             echo '```'
-            tail -n 150 tests.log 2>/dev/null || true
+            tail -n 120 tests.log 2>/dev/null || true
             echo '```'
           } >> "${GITHUB_STEP_SUMMARY}"
 
-          # Annotations travel through the checks API, which is reachable even
-          # when the raw job log is not. They make the failure greppable.
-          for file in clippy.log tests.log; do
-            [ -f "${file}" ] || continue
-            grep -E "^(error|warning)|error\[|^thread |^---- " "${file}" | head -n 25 | while IFS= read -r line; do
-              echo "::error file=${file}::${line}"
-            done
-          done
+          if [ "${{ github.event_name }}" = "pull_request" ] &&
+             { [ "${{ steps.clippy.outcome }}" != "success" ] || [ "${{ steps.tests.outcome }}" != "success" ]; }; then
+            {
+              echo "### Rust diagnostics"
+              echo '#### clippy'
+              echo '```'
+              tail -n 120 clippy.log 2>/dev/null || true
+              echo '```'
+              echo '#### tests'
+              echo '```'
+              tail -n 160 tests.log 2>/dev/null || true
+              echo '```'
+            } > rust-report.md
+            gh pr comment "${{ github.event.pull_request.number }}" --body-file rust-report.md
+          fi
 
-          test "\${{ steps.clippy.outcome }}" = "success"
-          test "\${{ steps.tests.outcome }}" = "success"
+          test "${{ steps.clippy.outcome }}" = "success"
+          test "${{ steps.tests.outcome }}" = "success"
 
       - name: Release build
         run: cargo build --workspace --release
@@ -140,12 +152,16 @@ jobs:
       - name: Unknown pages are 404s
         run: |
           set -euo pipefail
-          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/components/date-picker)" = "404"
+          status=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/components/date-picker)
+          test "${status}" = "404"
 
   accessibility:
     name: Browser accessibility (axe + keyboard)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v5
 
@@ -173,21 +189,30 @@ jobs:
           set -o pipefail
           npx playwright test --reporter=line 2>&1 | tee playwright.log
 
-      - name: Report Playwright diagnostics
+      - name: Report diagnostics
         if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           {
-            echo "### playwright (\${{ steps.playwright.outcome }})"
+            echo "### playwright (${{ steps.playwright.outcome }})"
             echo '```'
-            grep -E "✘|Error|expect|Received|Expected|error" playwright.log | head -n 120 || true
+            tail -n 200 playwright.log 2>/dev/null || true
             echo '```'
           } >> "${GITHUB_STEP_SUMMARY}"
 
-          grep -E "✘|Error:|expect\(|Received|Expected|Timeout" playwright.log | head -n 25 | while IFS= read -r line; do
-            echo "::error file=playwright.log::${line}"
-          done
+          if [ "${{ github.event_name }}" = "pull_request" ] &&
+             [ "${{ steps.playwright.outcome }}" != "success" ]; then
+            {
+              echo "### Playwright diagnostics"
+              echo '```'
+              tail -n 250 playwright.log 2>/dev/null || true
+              echo '```'
+            } > playwright-report.md
+            gh pr comment "${{ github.event.pull_request.number }}" --body-file playwright-report.md
+          fi
 
-          test "\${{ steps.playwright.outcome }}" = "success"
+          test "${{ steps.playwright.outcome }}" = "success"
 
       - name: Upload report
         if: always()
