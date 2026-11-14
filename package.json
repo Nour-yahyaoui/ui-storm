@@ -61,7 +61,8 @@
     "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run test:contrast && npm run build",
     "backlog:build": "node scripts/build-backlog.mjs",
     "backlog:check": "node scripts/build-backlog.mjs --check",
-    "backlog:publish": "node scripts/publish-backlog.mjs"
+    "backlog:publish": "node scripts/publish-backlog.mjs",
+    "backlog:repair": "node scripts/publish-backlog.mjs --repair"
   },
   "peerDependencies": {
     "react": "^19.0.0",

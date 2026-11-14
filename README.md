@@ -176,6 +176,11 @@ The backlog is generated from `backlog/` so it cannot drift from the code:
 
 See [docs/backlog.md](docs/backlog.md) for every issue, and `npm run backlog:publish` to reproduce the GitHub backlog.
 
+Every issue's authoritative **type, area, priority, size and milestone** live in
+`backlog/backlog.json`. Some GitHub integrations can create issues but are not permitted to
+attach labels or milestones to them; when that happens the publisher says so explicitly and
+`npm run backlog:repair` applies the metadata later with a token that has issue write access.
+
 ## Contributing
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md). Two rules matter more than the rest:

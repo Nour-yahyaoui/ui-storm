@@ -164,8 +164,12 @@ for (const milestone of MILESTONES) {
   const milestoneIssues = ordered.filter((issue) => issue.milestone === milestone.slug);
   lines.push(`## ${milestone.title}`, '', milestone.description, '');
   for (const issue of milestoneIssues) {
-    const labels = issue.labels.filter((label) => label.startsWith('priority:')).join(', ');
-    lines.push(`- ${issue.title}${labels ? ` _(${labels.replace('priority: ', '')})_` : ''}`);
+    // Show the full intended metadata: it is the authoritative record when a
+    // GitHub integration cannot attach labels to issues.
+    const labels = issue.labels
+      .map((label) => label.replace(/^(type|area|priority|size): /, ''))
+      .join(' · ');
+    lines.push(`- ${issue.title} _(${labels})_`);
   }
   lines.push('');
 }

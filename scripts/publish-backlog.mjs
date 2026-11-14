@@ -7,14 +7,16 @@
  *  - milestones by title,
  *  - issues by the `<!-- aui-key: ... -->` marker appended to each body.
  *
- * Creating an issue needs the issue's dependencies to exist already, so the
- * build script emits a topological order and this script publishes strictly
- * sequentially (also staying inside GitHub's content-creation rate limits).
+ * Labels and milestones are attached in a second call, after creation. Some
+ * GitHub integrations accept issue creation but reject label/milestone updates
+ * (they answer 403 "Resource not accessible by integration"); that is reported
+ * per issue and summarised at the end instead of failing silently.
  *
  * Usage:
- *   npm run backlog:publish -- --dry-run
- *   npm run backlog:publish
- *   GITHUB_REPOSITORY=owner/repo GITHUB_TOKEN=... npm run backlog:publish
+ *   npm run backlog:publish -- --dry-run     # show what would be created
+ *   npm run backlog:publish                   # create missing issues
+ *   npm run backlog:repair                    # re-apply labels + milestones only
+ *   GITHUB_REPOSITORY=owner/repo npm run backlog:publish
  */
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -26,6 +28,7 @@ const BACKLOG = JSON.parse(
 
 const REPOSITORY = process.env.GITHUB_REPOSITORY ?? 'Nour-yahyaoui/ui-storm';
 const DRY_RUN = process.argv.includes('--dry-run');
+const REPAIR_ONLY = process.argv.includes('--repair');
 const LIMIT_ARG = process.argv.find((argument) => argument.startsWith('--limit='));
 const LIMIT = LIMIT_ARG ? Number.parseInt(LIMIT_ARG.split('=')[1], 10) : Number.POSITIVE_INFINITY;
 const DELAY_MS = Number.parseInt(process.env.PUBLISH_DELAY_MS ?? '800', 10);
@@ -43,8 +46,15 @@ function getToken() {
 }
 
 const TOKEN = getToken();
-
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+class ApiError extends Error {
+  constructor(message, status, body) {
+    super(message);
+    this.status = status;
+    this.body = body;
+  }
+}
 
 async function api(path, { method = 'GET', body } = {}) {
   const url = path.startsWith('http') ? path : `https://api.github.com${path}`;
@@ -81,13 +91,13 @@ async function api(path, { method = 'GET', body } = {}) {
     }
 
     const text = await response.text();
-    const retryable = response.status === 403 || response.status === 429 || response.status >= 500;
+    const retryable = response.status === 429 || response.status >= 500;
     if (!retryable || attempt === 6) {
-      const hint =
-        response.status === 403
-          ? '\nHint: the token needs issues:write on this repository, and secondary rate limits apply to rapid issue creation.'
-          : '';
-      throw new Error(`${method} ${path} failed (${response.status}): ${text}${hint}`);
+      throw new ApiError(
+        `${method} ${path} failed (${response.status}): ${text}`,
+        response.status,
+        text,
+      );
     }
 
     const retryAfter = Number.parseInt(response.headers.get('retry-after') ?? '', 10);
@@ -110,20 +120,62 @@ async function paginate(path) {
 }
 
 const markerPattern = /<!-- aui-key: ([a-z0-9-]+) -->/;
+const metadataBlocked = [];
+
+/**
+ * Attaches labels and milestone to an existing issue.
+ * Returns 'applied', 'skipped' (already correct) or 'blocked'.
+ */
+async function applyMetadata(issueNumber, issue, milestoneNumber, current = {}) {
+  let result = 'skipped';
+  const labels = issue.labels ?? [];
+  const currentLabels = new Set(current.labels ?? []);
+  const missingLabels = labels.filter((label) => !currentLabels.has(label));
+
+  if (missingLabels.length > 0) {
+    try {
+      await api(`/repos/${REPOSITORY}/issues/${issueNumber}/labels`, {
+        method: 'POST',
+        body: { labels: missingLabels },
+      });
+      result = 'applied';
+    } catch (error) {
+      if (error instanceof ApiError && (error.status === 403 || error.status === 422)) {
+        metadataBlocked.push({ issueNumber, what: 'labels', status: error.status });
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  if (milestoneNumber && current.milestone !== issue.milestone) {
+    try {
+      await api(`/repos/${REPOSITORY}/issues/${issueNumber}`, {
+        method: 'PATCH',
+        body: { milestone: milestoneNumber },
+      });
+      result = 'applied';
+    } catch (error) {
+      if (error instanceof ApiError && (error.status === 403 || error.status === 422)) {
+        metadataBlocked.push({ issueNumber, what: 'milestone', status: error.status });
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  return result;
+}
 
 async function main() {
   console.log(`Repository: ${REPOSITORY}`);
-  console.log(`Issues: ${Math.min(backlogIssues.length, LIMIT)} of ${backlogIssues.length}`);
+  console.log(`Backlog: ${BACKLOG.issues.length} issues${REPAIR_ONLY ? ' (repair mode)' : ''}`);
 
   if (DRY_RUN) {
-    const milestonesSeen = new Set();
-    for (const issue of backlogIssues.slice(0, Math.min(5, LIMIT))) {
+    for (const issue of BACKLOG.issues.slice(0, Math.min(5, LIMIT))) {
       console.log(`\n[${issue.order}] ${issue.title}`);
       console.log(`    labels: ${issue.labels.join(', ')}`);
-      console.log(
-        `    milestone: ${issue.milestone}${milestonesSeen.has(issue.milestone) ? '' : ' (new)'}`,
-      );
-      milestonesSeen.add(issue.milestone);
+      console.log(`    milestone: ${issue.milestone}`);
     }
     console.log('\nDry run: nothing was written.');
     return;
@@ -176,59 +228,82 @@ async function main() {
     `Milestones: ${createdMilestones} created, ${BACKLOG.milestones.length - createdMilestones} already present`,
   );
 
-  // ── issues ───────────────────────────────────────────────────────────────
+  // ── existing issues ──────────────────────────────────────────────────────
   const existingIssues = await paginate(`/repos/${REPOSITORY}/issues?state=all`);
-  const issueNumbers = new Map();
+  const published = new Map();
 
   for (const issue of existingIssues) {
     if (issue.pull_request) continue;
     const match = markerPattern.exec(issue.body ?? '');
-    if (match) issueNumbers.set(match[1], issue.number);
+    if (match) {
+      published.set(match[1], {
+        number: issue.number,
+        labels: (issue.labels ?? []).map((label) =>
+          typeof label === 'string' ? label : label.name,
+        ),
+        milestone: issue.milestone?.title ?? null,
+      });
+    }
   }
-  console.log(
-    `Issues: ${issueNumbers.size} already published, ${backlogIssues.length} in the backlog`,
-  );
+  console.log(`Issues: ${published.size} of ${BACKLOG.issues.length} already published`);
 
   let created = 0;
   let skipped = 0;
+  let metadataApplied = 0;
   let checked = 0;
 
-  for (const issue of backlogIssues) {
+  for (const issue of BACKLOG.issues) {
     if (checked >= LIMIT) break;
     checked += 1;
 
-    if (issueNumbers.has(issue.key)) {
+    const existing = published.get(issue.key);
+    if (existing) {
       skipped += 1;
+      if (REPAIR_ONLY) {
+        const result = await applyMetadata(
+          existing.number,
+          issue,
+          milestoneNumbers.get(issue.milestone),
+          existing,
+        );
+        if (result === 'applied') metadataApplied += 1;
+        await sleep(DELAY_MS / 2);
+      }
       continue;
     }
 
-    const missing = issue.dependsOn.filter((key) => !issueNumbers.has(key));
+    if (REPAIR_ONLY) continue;
+
+    const missing = issue.dependsOn.filter((key) => !published.has(key));
     if (missing.length > 0) {
       throw new Error(
-        `Refusing to publish "${issue.title}": dependency ${missing.join(', ')} has no issue number. ` +
+        `Refusing to publish "${issue.title}": dependency ${missing.join(', ')} has no issue. ` +
           'The backlog is out of dependency order — run npm run backlog:build.',
       );
     }
 
     const dependencyLine =
       issue.dependsOn.length > 0
-        ? `\n\n**Depends on:** ${issue.dependsOn.map((key) => `#${issueNumbers.get(key)}`).join(', ')}`
+        ? `\n\n**Depends on:** ${issue.dependsOn.map((key) => `#${published.get(key).number}`).join(', ')}`
         : '';
 
     const body = `${issue.body.trimEnd()}${dependencyLine}\n\n<!-- aui-key: ${issue.key} -->`;
 
     const createdIssue = await api(`/repos/${REPOSITORY}/issues`, {
       method: 'POST',
-      body: {
-        title: issue.title,
-        body,
-        labels: issue.labels,
-        milestone: milestoneNumbers.get(issue.milestone),
-      },
+      body: { title: issue.title, body },
     });
 
-    issueNumbers.set(issue.key, createdIssue.number);
+    published.set(issue.key, { number: createdIssue.number, labels: [], milestone: null });
     created += 1;
+
+    const result = await applyMetadata(
+      createdIssue.number,
+      issue,
+      milestoneNumbers.get(issue.milestone),
+      { labels: [], milestone: null },
+    );
+    if (result === 'applied') metadataApplied += 1;
 
     if (created % 20 === 0) {
       console.log(`  … ${created} created (last: #${createdIssue.number})`);
@@ -237,12 +312,27 @@ async function main() {
     await sleep(DELAY_MS);
   }
 
-  const url = `https://github.com/${REPOSITORY}/issues`;
-  console.log(`\nDone. ${created} created, ${skipped} already present.`);
-  console.log(`Backlog: ${url}  ·  Milestones: https://github.com/${REPOSITORY}/milestones`);
-}
+  console.log(
+    `\nDone. ${created} created, ${skipped} already present, ${metadataApplied} with metadata applied.`,
+  );
 
-const backlogIssues = BACKLOG.issues;
+  if (metadataBlocked.length > 0) {
+    const sample = metadataBlocked
+      .slice(0, 5)
+      .map((entry) => `#${entry.issueNumber} (${entry.what})`);
+    console.warn(
+      `\n⚠ ${metadataBlocked.length} metadata update(s) were rejected by the GitHub integration.` +
+        `\n  Example: ${sample.join(', ')}` +
+        '\n  The issues were created, but labels and milestones were not attached.' +
+        '\n  This happens with tokens whose permissions cannot modify issues (403 "Resource not accessible by integration").' +
+        '\n  Re-run `npm run backlog:repair` with a token that can edit issues, or use `gh auth login` as the repository owner.' +
+        '\n  The authoritative labels and milestone for every issue are in backlog/backlog.json and docs/backlog.md.',
+    );
+  }
+
+  console.log(`\nBacklog: https://github.com/${REPOSITORY}/issues`);
+  console.log(`Milestones: https://github.com/${REPOSITORY}/milestones`);
+}
 
 main().catch((error) => {
   console.error(`\nPublishing failed: ${error.message}\n`);

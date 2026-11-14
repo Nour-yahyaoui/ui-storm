@@ -24,435 +24,435 @@
 
 Everything components depend on: hooks for controlled state, focus traps, dismiss behaviour, portals, live-region announcements, SSR safety and the scaffolds that keep component work uniform.
 
-- Add custom lint rules for accessibility invariants _(p2)_
-- Define and enforce the supported browser baseline _(p1)_
-- Decide the composition strategy (asChild vs polymorphic as) _(p0)_
-- Implement useControllableState for every dual-mode control _(p0)_
-- Implement useDismiss for outside pointer, Escape, scroll and route changes _(p0)_
-- Add useEventCallback and useLatest utilities _(p2)_
-- Build the focus-trap primitive with nested-layer support _(p0)_
-- Define the icon foundation and mirroring registry _(p1)_
-- Add LiveRegionProvider and useAnnounce for screen reader announcements _(p0)_
-- Add an SSR-safe useMediaQuery hook _(p2)_
-- Build the anchored positioning primitive for popups _(p0)_
-- Add a portal layer stack with deterministic z-index ordering _(p0)_
-- Add useReducedMotion and a documented motion policy _(p1)_
-- Add a component scaffolding CLI (npm run gen:component) _(p1)_
-- Implement scroll locking without layout shift _(p1)_
-- Add an SSR and hydration test harness _(p1)_
-- Standardise id generation with a useStableId wrapper _(p1)_
-- Add type-level tests for the public prop contracts _(p2)_
+- Add custom lint rules for accessibility invariants _(chore · tooling · p2 · m)_
+- Define and enforce the supported browser baseline _(chore · tooling · p1 · s)_
+- Decide the composition strategy (asChild vs polymorphic as) _(design · tooling · p0 · m · needs: decision)_
+- Implement useControllableState for every dual-mode control _(feature · tooling · p0 · m)_
+- Implement useDismiss for outside pointer, Escape, scroll and route changes _(feature · tooling · p0 · m)_
+- Add useEventCallback and useLatest utilities _(chore · tooling · p2 · s)_
+- Build the focus-trap primitive with nested-layer support _(a11y · tooling · p0 · l)_
+- Define the icon foundation and mirroring registry _(design · tooling · p1 · m)_
+- Add LiveRegionProvider and useAnnounce for screen reader announcements _(a11y · tooling · p0 · m)_
+- Add an SSR-safe useMediaQuery hook _(feature · tooling · p2 · s)_
+- Build the anchored positioning primitive for popups _(feature · tooling · p0 · l · needs: decision)_
+- Add a portal layer stack with deterministic z-index ordering _(feature · tooling · p0 · m)_
+- Add useReducedMotion and a documented motion policy _(a11y · tooling · p1 · s)_
+- Add a component scaffolding CLI (npm run gen:component) _(chore · tooling · p1 · m · good first issue)_
+- Implement scroll locking without layout shift _(feature · tooling · p1 · m)_
+- Add an SSR and hydration test harness _(test · tooling · p1 · m)_
+- Standardise id generation with a useStableId wrapper _(chore · tooling · p1 · s)_
+- Add type-level tests for the public prop contracts _(test · tooling · p2 · m)_
 
 ## 01 · Core primitives
 
 The smallest building blocks — Button, IconButton, Link, Text, Heading, VisuallyHidden, Spinner, Badge, Kbd, Avatar. These set the API, token and testing conventions every later component copies.
 
-- Avatar — core implementation and public API _(p2)_
-- Avatar — keyboard interaction and focus management _(p2)_
-- Avatar — ARIA semantics and screen reader contract _(p2)_
-- Avatar — RTL, bidi and Arabic content handling _(p2)_
-- Badge — core implementation and public API _(p2)_
-- Badge — keyboard interaction and focus management _(p2)_
-- Badge — ARIA semantics and screen reader contract _(p2)_
-- Badge — RTL, bidi and Arabic content handling _(p2)_
-- Button — core implementation and public API _(p1)_
-- Button — keyboard interaction and focus management _(p1)_
-- Button — ARIA semantics and screen reader contract _(p1)_
-- Button — RTL, bidi and Arabic content handling _(p1)_
-- Button — documentation page and usage guidance _(p1)_
-- Button — interaction, unit and visual regression tests _(p1)_
-- Button — Storybook stories for states, RTL and dark mode _(p1)_
-- Heading — core implementation and public API _(p2)_
-- Heading — keyboard interaction and focus management _(p2)_
-- Heading — ARIA semantics and screen reader contract _(p2)_
-- Heading — RTL, bidi and Arabic content handling _(p2)_
-- IconButton — core implementation and public API _(p1)_
-- IconButton — keyboard interaction and focus management _(p1)_
-- IconButton — ARIA semantics and screen reader contract _(p1)_
-- IconButton — RTL, bidi and Arabic content handling _(p1)_
-- Kbd — core implementation and public API _(p3)_
-- Kbd — keyboard interaction and focus management _(p3)_
-- Kbd — ARIA semantics and screen reader contract _(p3)_
-- Kbd — RTL, bidi and Arabic content handling _(p3)_
-- Link — core implementation and public API _(p1)_
-- Link — keyboard interaction and focus management _(p1)_
-- Link — ARIA semantics and screen reader contract _(p1)_
-- Link — RTL, bidi and Arabic content handling _(p1)_
-- Spinner — core implementation and public API _(p1)_
-- Spinner — keyboard interaction and focus management _(p1)_
-- Spinner — ARIA semantics and screen reader contract _(p1)_
-- Spinner — RTL, bidi and Arabic content handling _(p1)_
-- Text — core implementation and public API _(p2)_
-- Text — keyboard interaction and focus management _(p2)_
-- Text — ARIA semantics and screen reader contract _(p2)_
-- Text — RTL, bidi and Arabic content handling _(p2)_
-- VisuallyHidden — core implementation and public API _(p1)_
-- VisuallyHidden — keyboard interaction and focus management _(p1)_
-- VisuallyHidden — ARIA semantics and screen reader contract _(p1)_
-- VisuallyHidden — RTL, bidi and Arabic content handling _(p1)_
+- Avatar — core implementation and public API _(feature · primitives · p2 · l)_
+- Avatar — keyboard interaction and focus management _(a11y · primitives · p2 · m)_
+- Avatar — ARIA semantics and screen reader contract _(a11y · primitives · p2 · m)_
+- Avatar — RTL, bidi and Arabic content handling _(i18n · primitives · p2 · m)_
+- Badge — core implementation and public API _(feature · primitives · p2 · l)_
+- Badge — keyboard interaction and focus management _(a11y · primitives · p2 · m)_
+- Badge — ARIA semantics and screen reader contract _(a11y · primitives · p2 · m)_
+- Badge — RTL, bidi and Arabic content handling _(i18n · primitives · p2 · m)_
+- Button — core implementation and public API _(feature · primitives · p1 · l)_
+- Button — keyboard interaction and focus management _(a11y · primitives · p1 · m)_
+- Button — ARIA semantics and screen reader contract _(a11y · primitives · p1 · m)_
+- Button — RTL, bidi and Arabic content handling _(i18n · primitives · p1 · m)_
+- Button — documentation page and usage guidance _(docs · primitives · p1 · m)_
+- Button — interaction, unit and visual regression tests _(test · primitives · p1 · m)_
+- Button — Storybook stories for states, RTL and dark mode _(docs · primitives · p1 · s)_
+- Heading — core implementation and public API _(feature · primitives · p2 · l)_
+- Heading — keyboard interaction and focus management _(a11y · primitives · p2 · m)_
+- Heading — ARIA semantics and screen reader contract _(a11y · primitives · p2 · m)_
+- Heading — RTL, bidi and Arabic content handling _(i18n · primitives · p2 · m)_
+- IconButton — core implementation and public API _(feature · primitives · p1 · l)_
+- IconButton — keyboard interaction and focus management _(a11y · primitives · p1 · m)_
+- IconButton — ARIA semantics and screen reader contract _(a11y · primitives · p1 · m)_
+- IconButton — RTL, bidi and Arabic content handling _(i18n · primitives · p1 · m)_
+- Kbd — core implementation and public API _(feature · primitives · p3 · l)_
+- Kbd — keyboard interaction and focus management _(a11y · primitives · p3 · m)_
+- Kbd — ARIA semantics and screen reader contract _(a11y · primitives · p3 · m)_
+- Kbd — RTL, bidi and Arabic content handling _(i18n · primitives · p3 · m)_
+- Link — core implementation and public API _(feature · primitives · p1 · l)_
+- Link — keyboard interaction and focus management _(a11y · primitives · p1 · m)_
+- Link — ARIA semantics and screen reader contract _(a11y · primitives · p1 · m)_
+- Link — RTL, bidi and Arabic content handling _(i18n · primitives · p1 · m)_
+- Spinner — core implementation and public API _(feature · primitives · p1 · l)_
+- Spinner — keyboard interaction and focus management _(a11y · primitives · p1 · m)_
+- Spinner — ARIA semantics and screen reader contract _(a11y · primitives · p1 · m)_
+- Spinner — RTL, bidi and Arabic content handling _(i18n · primitives · p1 · m)_
+- Text — core implementation and public API _(feature · primitives · p2 · l)_
+- Text — keyboard interaction and focus management _(a11y · primitives · p2 · m)_
+- Text — ARIA semantics and screen reader contract _(a11y · primitives · p2 · m)_
+- Text — RTL, bidi and Arabic content handling _(i18n · primitives · p2 · m)_
+- VisuallyHidden — core implementation and public API _(feature · primitives · p1 · l)_
+- VisuallyHidden — keyboard interaction and focus management _(a11y · primitives · p1 · m)_
+- VisuallyHidden — ARIA semantics and screen reader contract _(a11y · primitives · p1 · m)_
+- VisuallyHidden — RTL, bidi and Arabic content handling _(i18n · primitives · p1 · m)_
 
 ## 02 · Form controls
 
 Labelled, validated, error-announcing controls that work with screen readers, keyboards, IME composition and RTL input. Includes the Field primitive that makes label/description/error wiring automatic.
 
-- Checkbox — core implementation and public API _(p1)_
-- Checkbox — keyboard interaction and focus management _(p1)_
-- Checkbox — ARIA semantics and screen reader contract _(p1)_
-- Checkbox — RTL, bidi and Arabic content handling _(p1)_
-- Checkbox — documentation page and usage guidance _(p1)_
-- Checkbox — interaction, unit and visual regression tests _(p1)_
-- Checkbox — Storybook stories for states, RTL and dark mode _(p1)_
-- CheckboxGroup — core implementation and public API _(p2)_
-- CheckboxGroup — keyboard interaction and focus management _(p2)_
-- CheckboxGroup — ARIA semantics and screen reader contract _(p2)_
-- CheckboxGroup — RTL, bidi and Arabic content handling _(p2)_
-- CheckboxGroup — documentation page and usage guidance _(p2)_
-- CheckboxGroup — interaction, unit and visual regression tests _(p2)_
-- Combobox — core implementation and public API _(p1)_
-- Combobox — keyboard interaction and focus management _(p1)_
-- Combobox — ARIA semantics and screen reader contract _(p1)_
-- Combobox — RTL, bidi and Arabic content handling _(p1)_
-- Combobox — documentation page and usage guidance _(p1)_
-- Combobox — interaction, unit and visual regression tests _(p1)_
-- Field — core implementation and public API _(p1)_
-- Field — keyboard interaction and focus management _(p1)_
-- Field — ARIA semantics and screen reader contract _(p1)_
-- Field — RTL, bidi and Arabic content handling _(p1)_
-- Field — documentation page and usage guidance _(p1)_
-- Field — interaction, unit and visual regression tests _(p1)_
-- FileUpload — core implementation and public API _(p3)_
-- FileUpload — keyboard interaction and focus management _(p3)_
-- FileUpload — ARIA semantics and screen reader contract _(p3)_
-- FileUpload — RTL, bidi and Arabic content handling _(p3)_
-- Input — core implementation and public API _(p1)_
-- Input — keyboard interaction and focus management _(p1)_
-- Input — ARIA semantics and screen reader contract _(p1)_
-- Input — RTL, bidi and Arabic content handling _(p1)_
-- Input — documentation page and usage guidance _(p1)_
-- Input — interaction, unit and visual regression tests _(p1)_
-- Input — Storybook stories for states, RTL and dark mode _(p1)_
-- NumberField — core implementation and public API _(p2)_
-- NumberField — keyboard interaction and focus management _(p2)_
-- NumberField — ARIA semantics and screen reader contract _(p2)_
-- NumberField — RTL, bidi and Arabic content handling _(p2)_
-- Radio — core implementation and public API _(p2)_
-- Radio — keyboard interaction and focus management _(p2)_
-- Radio — ARIA semantics and screen reader contract _(p2)_
-- Radio — RTL, bidi and Arabic content handling _(p2)_
-- Radio — documentation page and usage guidance _(p2)_
-- Radio — interaction, unit and visual regression tests _(p2)_
-- RadioGroup — core implementation and public API _(p2)_
-- RadioGroup — keyboard interaction and focus management _(p2)_
-- RadioGroup — ARIA semantics and screen reader contract _(p2)_
-- RadioGroup — RTL, bidi and Arabic content handling _(p2)_
-- RadioGroup — documentation page and usage guidance _(p2)_
-- RadioGroup — interaction, unit and visual regression tests _(p2)_
-- SearchField — core implementation and public API _(p2)_
-- SearchField — keyboard interaction and focus management _(p2)_
-- SearchField — ARIA semantics and screen reader contract _(p2)_
-- SearchField — RTL, bidi and Arabic content handling _(p2)_
-- Select — core implementation and public API _(p1)_
-- Select — keyboard interaction and focus management _(p1)_
-- Select — ARIA semantics and screen reader contract _(p1)_
-- Select — RTL, bidi and Arabic content handling _(p1)_
-- Select — documentation page and usage guidance _(p1)_
-- Select — interaction, unit and visual regression tests _(p1)_
-- Slider — core implementation and public API _(p2)_
-- Slider — keyboard interaction and focus management _(p2)_
-- Slider — ARIA semantics and screen reader contract _(p2)_
-- Slider — RTL, bidi and Arabic content handling _(p2)_
-- Slider — documentation page and usage guidance _(p2)_
-- Slider — interaction, unit and visual regression tests _(p2)_
-- Switch — core implementation and public API _(p2)_
-- Switch — keyboard interaction and focus management _(p2)_
-- Switch — ARIA semantics and screen reader contract _(p2)_
-- Switch — RTL, bidi and Arabic content handling _(p2)_
-- Textarea — core implementation and public API _(p2)_
-- Textarea — keyboard interaction and focus management _(p2)_
-- Textarea — ARIA semantics and screen reader contract _(p2)_
-- Textarea — RTL, bidi and Arabic content handling _(p2)_
+- Checkbox — core implementation and public API _(feature · forms · p1 · l)_
+- Checkbox — keyboard interaction and focus management _(a11y · forms · p1 · m)_
+- Checkbox — ARIA semantics and screen reader contract _(a11y · forms · p1 · m)_
+- Checkbox — RTL, bidi and Arabic content handling _(i18n · forms · p1 · m)_
+- Checkbox — documentation page and usage guidance _(docs · forms · p1 · m)_
+- Checkbox — interaction, unit and visual regression tests _(test · forms · p1 · m)_
+- Checkbox — Storybook stories for states, RTL and dark mode _(docs · forms · p1 · s)_
+- CheckboxGroup — core implementation and public API _(feature · forms · p2 · l)_
+- CheckboxGroup — keyboard interaction and focus management _(a11y · forms · p2 · m)_
+- CheckboxGroup — ARIA semantics and screen reader contract _(a11y · forms · p2 · m)_
+- CheckboxGroup — RTL, bidi and Arabic content handling _(i18n · forms · p2 · m)_
+- CheckboxGroup — documentation page and usage guidance _(docs · forms · p2 · m)_
+- CheckboxGroup — interaction, unit and visual regression tests _(test · forms · p2 · m)_
+- Combobox — core implementation and public API _(feature · forms · p1 · l)_
+- Combobox — keyboard interaction and focus management _(a11y · forms · p1 · m)_
+- Combobox — ARIA semantics and screen reader contract _(a11y · forms · p1 · m)_
+- Combobox — RTL, bidi and Arabic content handling _(i18n · forms · p1 · m)_
+- Combobox — documentation page and usage guidance _(docs · forms · p1 · m)_
+- Combobox — interaction, unit and visual regression tests _(test · forms · p1 · m)_
+- Field — core implementation and public API _(feature · forms · p1 · l)_
+- Field — keyboard interaction and focus management _(a11y · forms · p1 · m)_
+- Field — ARIA semantics and screen reader contract _(a11y · forms · p1 · m)_
+- Field — RTL, bidi and Arabic content handling _(i18n · forms · p1 · m)_
+- Field — documentation page and usage guidance _(docs · forms · p1 · m)_
+- Field — interaction, unit and visual regression tests _(test · forms · p1 · m)_
+- FileUpload — core implementation and public API _(feature · forms · p3 · l)_
+- FileUpload — keyboard interaction and focus management _(a11y · forms · p3 · m)_
+- FileUpload — ARIA semantics and screen reader contract _(a11y · forms · p3 · m)_
+- FileUpload — RTL, bidi and Arabic content handling _(i18n · forms · p3 · m)_
+- Input — core implementation and public API _(feature · forms · p1 · l)_
+- Input — keyboard interaction and focus management _(a11y · forms · p1 · m)_
+- Input — ARIA semantics and screen reader contract _(a11y · forms · p1 · m)_
+- Input — RTL, bidi and Arabic content handling _(i18n · forms · p1 · m)_
+- Input — documentation page and usage guidance _(docs · forms · p1 · m)_
+- Input — interaction, unit and visual regression tests _(test · forms · p1 · m)_
+- Input — Storybook stories for states, RTL and dark mode _(docs · forms · p1 · s)_
+- NumberField — core implementation and public API _(feature · forms · p2 · l)_
+- NumberField — keyboard interaction and focus management _(a11y · forms · p2 · m)_
+- NumberField — ARIA semantics and screen reader contract _(a11y · forms · p2 · m)_
+- NumberField — RTL, bidi and Arabic content handling _(i18n · forms · p2 · m)_
+- Radio — core implementation and public API _(feature · forms · p2 · l)_
+- Radio — keyboard interaction and focus management _(a11y · forms · p2 · m)_
+- Radio — ARIA semantics and screen reader contract _(a11y · forms · p2 · m)_
+- Radio — RTL, bidi and Arabic content handling _(i18n · forms · p2 · m)_
+- Radio — documentation page and usage guidance _(docs · forms · p2 · m)_
+- Radio — interaction, unit and visual regression tests _(test · forms · p2 · m)_
+- RadioGroup — core implementation and public API _(feature · forms · p2 · l)_
+- RadioGroup — keyboard interaction and focus management _(a11y · forms · p2 · m)_
+- RadioGroup — ARIA semantics and screen reader contract _(a11y · forms · p2 · m)_
+- RadioGroup — RTL, bidi and Arabic content handling _(i18n · forms · p2 · m)_
+- RadioGroup — documentation page and usage guidance _(docs · forms · p2 · m)_
+- RadioGroup — interaction, unit and visual regression tests _(test · forms · p2 · m)_
+- SearchField — core implementation and public API _(feature · forms · p2 · l)_
+- SearchField — keyboard interaction and focus management _(a11y · forms · p2 · m)_
+- SearchField — ARIA semantics and screen reader contract _(a11y · forms · p2 · m)_
+- SearchField — RTL, bidi and Arabic content handling _(i18n · forms · p2 · m)_
+- Select — core implementation and public API _(feature · forms · p1 · l)_
+- Select — keyboard interaction and focus management _(a11y · forms · p1 · m)_
+- Select — ARIA semantics and screen reader contract _(a11y · forms · p1 · m)_
+- Select — RTL, bidi and Arabic content handling _(i18n · forms · p1 · m)_
+- Select — documentation page and usage guidance _(docs · forms · p1 · m)_
+- Select — interaction, unit and visual regression tests _(test · forms · p1 · m)_
+- Slider — core implementation and public API _(feature · forms · p2 · l)_
+- Slider — keyboard interaction and focus management _(a11y · forms · p2 · m)_
+- Slider — ARIA semantics and screen reader contract _(a11y · forms · p2 · m)_
+- Slider — RTL, bidi and Arabic content handling _(i18n · forms · p2 · m)_
+- Slider — documentation page and usage guidance _(docs · forms · p2 · m)_
+- Slider — interaction, unit and visual regression tests _(test · forms · p2 · m)_
+- Switch — core implementation and public API _(feature · forms · p2 · l)_
+- Switch — keyboard interaction and focus management _(a11y · forms · p2 · m)_
+- Switch — ARIA semantics and screen reader contract _(a11y · forms · p2 · m)_
+- Switch — RTL, bidi and Arabic content handling _(i18n · forms · p2 · m)_
+- Textarea — core implementation and public API _(feature · forms · p2 · l)_
+- Textarea — keyboard interaction and focus management _(a11y · forms · p2 · m)_
+- Textarea — ARIA semantics and screen reader contract _(a11y · forms · p2 · m)_
+- Textarea — RTL, bidi and Arabic content handling _(i18n · forms · p2 · m)_
 
 ## 03 · Overlays & messaging
 
 Layered UI: dialogs, drawers, popovers, tooltips, menus, toasts and a command palette. Focus restoration, scroll locking, portal stacking and Escape semantics are shared primitives, not per-component rewrites.
 
-- AlertDialog — core implementation and public API _(p1)_
-- AlertDialog — keyboard interaction and focus management _(p1)_
-- AlertDialog — ARIA semantics and screen reader contract _(p1)_
-- AlertDialog — RTL, bidi and Arabic content handling _(p1)_
-- CommandPalette — core implementation and public API _(p3)_
-- CommandPalette — keyboard interaction and focus management _(p3)_
-- CommandPalette — ARIA semantics and screen reader contract _(p3)_
-- CommandPalette — RTL, bidi and Arabic content handling _(p3)_
-- ContextMenu — core implementation and public API _(p3)_
-- ContextMenu — keyboard interaction and focus management _(p3)_
-- ContextMenu — ARIA semantics and screen reader contract _(p3)_
-- ContextMenu — RTL, bidi and Arabic content handling _(p3)_
-- DatePicker — core implementation and public API _(p2)_
-- DatePicker — keyboard interaction and focus management _(p2)_
-- DatePicker — ARIA semantics and screen reader contract _(p2)_
-- DatePicker — RTL, bidi and Arabic content handling _(p2)_
-- DatePicker — documentation page and usage guidance _(p2)_
-- DatePicker — interaction, unit and visual regression tests _(p2)_
-- Dialog — core implementation and public API _(p1)_
-- Dialog — keyboard interaction and focus management _(p1)_
-- Dialog — ARIA semantics and screen reader contract _(p1)_
-- Dialog — RTL, bidi and Arabic content handling _(p1)_
-- Dialog — documentation page and usage guidance _(p1)_
-- Dialog — interaction, unit and visual regression tests _(p1)_
-- Dialog — Storybook stories for states, RTL and dark mode _(p1)_
-- Drawer — core implementation and public API _(p2)_
-- Drawer — keyboard interaction and focus management _(p2)_
-- Drawer — ARIA semantics and screen reader contract _(p2)_
-- Drawer — RTL, bidi and Arabic content handling _(p2)_
-- HoverCard — core implementation and public API _(p3)_
-- HoverCard — keyboard interaction and focus management _(p3)_
-- HoverCard — ARIA semantics and screen reader contract _(p3)_
-- HoverCard — RTL, bidi and Arabic content handling _(p3)_
-- Menu — core implementation and public API _(p2)_
-- Menu — keyboard interaction and focus management _(p2)_
-- Menu — ARIA semantics and screen reader contract _(p2)_
-- Menu — RTL, bidi and Arabic content handling _(p2)_
-- Menu — documentation page and usage guidance _(p2)_
-- Menu — interaction, unit and visual regression tests _(p2)_
-- Popover — core implementation and public API _(p1)_
-- Popover — keyboard interaction and focus management _(p1)_
-- Popover — ARIA semantics and screen reader contract _(p1)_
-- Popover — RTL, bidi and Arabic content handling _(p1)_
-- Toast — core implementation and public API _(p2)_
-- Toast — keyboard interaction and focus management _(p2)_
-- Toast — ARIA semantics and screen reader contract _(p2)_
-- Toast — RTL, bidi and Arabic content handling _(p2)_
-- Toast — documentation page and usage guidance _(p2)_
-- Toast — interaction, unit and visual regression tests _(p2)_
-- Tooltip — core implementation and public API _(p1)_
-- Tooltip — keyboard interaction and focus management _(p1)_
-- Tooltip — ARIA semantics and screen reader contract _(p1)_
-- Tooltip — RTL, bidi and Arabic content handling _(p1)_
+- AlertDialog — core implementation and public API _(feature · overlays · p1 · l)_
+- AlertDialog — keyboard interaction and focus management _(a11y · overlays · p1 · m)_
+- AlertDialog — ARIA semantics and screen reader contract _(a11y · overlays · p1 · m)_
+- AlertDialog — RTL, bidi and Arabic content handling _(i18n · overlays · p1 · m)_
+- CommandPalette — core implementation and public API _(feature · overlays · p3 · l)_
+- CommandPalette — keyboard interaction and focus management _(a11y · overlays · p3 · m)_
+- CommandPalette — ARIA semantics and screen reader contract _(a11y · overlays · p3 · m)_
+- CommandPalette — RTL, bidi and Arabic content handling _(i18n · overlays · p3 · m)_
+- ContextMenu — core implementation and public API _(feature · overlays · p3 · l)_
+- ContextMenu — keyboard interaction and focus management _(a11y · overlays · p3 · m)_
+- ContextMenu — ARIA semantics and screen reader contract _(a11y · overlays · p3 · m)_
+- ContextMenu — RTL, bidi and Arabic content handling _(i18n · overlays · p3 · m)_
+- DatePicker — core implementation and public API _(feature · overlays · p2 · l)_
+- DatePicker — keyboard interaction and focus management _(a11y · overlays · p2 · m)_
+- DatePicker — ARIA semantics and screen reader contract _(a11y · overlays · p2 · m)_
+- DatePicker — RTL, bidi and Arabic content handling _(i18n · overlays · p2 · m)_
+- DatePicker — documentation page and usage guidance _(docs · overlays · p2 · m)_
+- DatePicker — interaction, unit and visual regression tests _(test · overlays · p2 · m)_
+- Dialog — core implementation and public API _(feature · overlays · p1 · l)_
+- Dialog — keyboard interaction and focus management _(a11y · overlays · p1 · m)_
+- Dialog — ARIA semantics and screen reader contract _(a11y · overlays · p1 · m)_
+- Dialog — RTL, bidi and Arabic content handling _(i18n · overlays · p1 · m)_
+- Dialog — documentation page and usage guidance _(docs · overlays · p1 · m)_
+- Dialog — interaction, unit and visual regression tests _(test · overlays · p1 · m)_
+- Dialog — Storybook stories for states, RTL and dark mode _(docs · overlays · p1 · s)_
+- Drawer — core implementation and public API _(feature · overlays · p2 · l)_
+- Drawer — keyboard interaction and focus management _(a11y · overlays · p2 · m)_
+- Drawer — ARIA semantics and screen reader contract _(a11y · overlays · p2 · m)_
+- Drawer — RTL, bidi and Arabic content handling _(i18n · overlays · p2 · m)_
+- HoverCard — core implementation and public API _(feature · overlays · p3 · l)_
+- HoverCard — keyboard interaction and focus management _(a11y · overlays · p3 · m)_
+- HoverCard — ARIA semantics and screen reader contract _(a11y · overlays · p3 · m)_
+- HoverCard — RTL, bidi and Arabic content handling _(i18n · overlays · p3 · m)_
+- Menu — core implementation and public API _(feature · overlays · p2 · l)_
+- Menu — keyboard interaction and focus management _(a11y · overlays · p2 · m)_
+- Menu — ARIA semantics and screen reader contract _(a11y · overlays · p2 · m)_
+- Menu — RTL, bidi and Arabic content handling _(i18n · overlays · p2 · m)_
+- Menu — documentation page and usage guidance _(docs · overlays · p2 · m)_
+- Menu — interaction, unit and visual regression tests _(test · overlays · p2 · m)_
+- Popover — core implementation and public API _(feature · overlays · p1 · l)_
+- Popover — keyboard interaction and focus management _(a11y · overlays · p1 · m)_
+- Popover — ARIA semantics and screen reader contract _(a11y · overlays · p1 · m)_
+- Popover — RTL, bidi and Arabic content handling _(i18n · overlays · p1 · m)_
+- Toast — core implementation and public API _(feature · overlays · p2 · l)_
+- Toast — keyboard interaction and focus management _(a11y · overlays · p2 · m)_
+- Toast — ARIA semantics and screen reader contract _(a11y · overlays · p2 · m)_
+- Toast — RTL, bidi and Arabic content handling _(i18n · overlays · p2 · m)_
+- Toast — documentation page and usage guidance _(docs · overlays · p2 · m)_
+- Toast — interaction, unit and visual regression tests _(test · overlays · p2 · m)_
+- Tooltip — core implementation and public API _(feature · overlays · p1 · l)_
+- Tooltip — keyboard interaction and focus management _(a11y · overlays · p1 · m)_
+- Tooltip — ARIA semantics and screen reader contract _(a11y · overlays · p1 · m)_
+- Tooltip — RTL, bidi and Arabic content handling _(i18n · overlays · p1 · m)_
 
 ## 04 · Navigation & structure
 
 Tabs, accordions, disclosure, breadcrumbs, pagination, steppers, tree views and skip links. Roving tabindex and arrow-key semantics must be identical in LTR and RTL.
 
-- Accordion — core implementation and public API _(p2)_
-- Accordion — keyboard interaction and focus management _(p2)_
-- Accordion — ARIA semantics and screen reader contract _(p2)_
-- Accordion — RTL, bidi and Arabic content handling _(p2)_
-- Breadcrumbs — core implementation and public API _(p2)_
-- Breadcrumbs — keyboard interaction and focus management _(p2)_
-- Breadcrumbs — ARIA semantics and screen reader contract _(p2)_
-- Breadcrumbs — RTL, bidi and Arabic content handling _(p2)_
-- Disclosure — core implementation and public API _(p3)_
-- Disclosure — keyboard interaction and focus management _(p3)_
-- Disclosure — ARIA semantics and screen reader contract _(p3)_
-- Disclosure — RTL, bidi and Arabic content handling _(p3)_
-- Pagination — core implementation and public API _(p2)_
-- Pagination — keyboard interaction and focus management _(p2)_
-- Pagination — ARIA semantics and screen reader contract _(p2)_
-- Pagination — RTL, bidi and Arabic content handling _(p2)_
-- SidebarNav — core implementation and public API _(p3)_
-- SidebarNav — keyboard interaction and focus management _(p3)_
-- SidebarNav — ARIA semantics and screen reader contract _(p3)_
-- SidebarNav — RTL, bidi and Arabic content handling _(p3)_
-- SkipLink — core implementation and public API _(p1)_
-- SkipLink — keyboard interaction and focus management _(p1)_
-- SkipLink — ARIA semantics and screen reader contract _(p1)_
-- SkipLink — RTL, bidi and Arabic content handling _(p1)_
-- Stepper — core implementation and public API _(p3)_
-- Stepper — keyboard interaction and focus management _(p3)_
-- Stepper — ARIA semantics and screen reader contract _(p3)_
-- Stepper — RTL, bidi and Arabic content handling _(p3)_
-- Tabs — core implementation and public API _(p1)_
-- Tabs — keyboard interaction and focus management _(p1)_
-- Tabs — ARIA semantics and screen reader contract _(p1)_
-- Tabs — RTL, bidi and Arabic content handling _(p1)_
-- Tabs — documentation page and usage guidance _(p1)_
-- Tabs — interaction, unit and visual regression tests _(p1)_
-- Tabs — Storybook stories for states, RTL and dark mode _(p1)_
-- TreeView — core implementation and public API _(p3)_
-- TreeView — keyboard interaction and focus management _(p3)_
-- TreeView — ARIA semantics and screen reader contract _(p3)_
-- TreeView — RTL, bidi and Arabic content handling _(p3)_
+- Accordion — core implementation and public API _(feature · navigation · p2 · l)_
+- Accordion — keyboard interaction and focus management _(a11y · navigation · p2 · m)_
+- Accordion — ARIA semantics and screen reader contract _(a11y · navigation · p2 · m)_
+- Accordion — RTL, bidi and Arabic content handling _(i18n · navigation · p2 · m)_
+- Breadcrumbs — core implementation and public API _(feature · navigation · p2 · l)_
+- Breadcrumbs — keyboard interaction and focus management _(a11y · navigation · p2 · m)_
+- Breadcrumbs — ARIA semantics and screen reader contract _(a11y · navigation · p2 · m)_
+- Breadcrumbs — RTL, bidi and Arabic content handling _(i18n · navigation · p2 · m)_
+- Disclosure — core implementation and public API _(feature · navigation · p3 · l)_
+- Disclosure — keyboard interaction and focus management _(a11y · navigation · p3 · m)_
+- Disclosure — ARIA semantics and screen reader contract _(a11y · navigation · p3 · m)_
+- Disclosure — RTL, bidi and Arabic content handling _(i18n · navigation · p3 · m)_
+- Pagination — core implementation and public API _(feature · navigation · p2 · l)_
+- Pagination — keyboard interaction and focus management _(a11y · navigation · p2 · m)_
+- Pagination — ARIA semantics and screen reader contract _(a11y · navigation · p2 · m)_
+- Pagination — RTL, bidi and Arabic content handling _(i18n · navigation · p2 · m)_
+- SidebarNav — core implementation and public API _(feature · navigation · p3 · l)_
+- SidebarNav — keyboard interaction and focus management _(a11y · navigation · p3 · m)_
+- SidebarNav — ARIA semantics and screen reader contract _(a11y · navigation · p3 · m)_
+- SidebarNav — RTL, bidi and Arabic content handling _(i18n · navigation · p3 · m)_
+- SkipLink — core implementation and public API _(feature · navigation · p1 · l)_
+- SkipLink — keyboard interaction and focus management _(a11y · navigation · p1 · m)_
+- SkipLink — ARIA semantics and screen reader contract _(a11y · navigation · p1 · m)_
+- SkipLink — RTL, bidi and Arabic content handling _(i18n · navigation · p1 · m)_
+- Stepper — core implementation and public API _(feature · navigation · p3 · l)_
+- Stepper — keyboard interaction and focus management _(a11y · navigation · p3 · m)_
+- Stepper — ARIA semantics and screen reader contract _(a11y · navigation · p3 · m)_
+- Stepper — RTL, bidi and Arabic content handling _(i18n · navigation · p3 · m)_
+- Tabs — core implementation and public API _(feature · navigation · p1 · l)_
+- Tabs — keyboard interaction and focus management _(a11y · navigation · p1 · m)_
+- Tabs — ARIA semantics and screen reader contract _(a11y · navigation · p1 · m)_
+- Tabs — RTL, bidi and Arabic content handling _(i18n · navigation · p1 · m)_
+- Tabs — documentation page and usage guidance _(docs · navigation · p1 · m)_
+- Tabs — interaction, unit and visual regression tests _(test · navigation · p1 · m)_
+- Tabs — Storybook stories for states, RTL and dark mode _(docs · navigation · p1 · s)_
+- TreeView — core implementation and public API _(feature · navigation · p3 · l)_
+- TreeView — keyboard interaction and focus management _(a11y · navigation · p3 · m)_
+- TreeView — ARIA semantics and screen reader contract _(a11y · navigation · p3 · m)_
+- TreeView — RTL, bidi and Arabic content handling _(i18n · navigation · p3 · m)_
 
 ## 05 · Data display
 
 Tables, progress, meters, skeletons, empty states, cards and timelines — read correctly by screen readers and reflowed at 320px without horizontal scrolling.
 
-- Card — core implementation and public API _(p3)_
-- Card — keyboard interaction and focus management _(p3)_
-- Card — ARIA semantics and screen reader contract _(p3)_
-- Card — RTL, bidi and Arabic content handling _(p3)_
-- CodeBlock — core implementation and public API _(p3)_
-- CodeBlock — keyboard interaction and focus management _(p3)_
-- CodeBlock — ARIA semantics and screen reader contract _(p3)_
-- CodeBlock — RTL, bidi and Arabic content handling _(p3)_
-- DataTable — core implementation and public API _(p3)_
-- DataTable — keyboard interaction and focus management _(p3)_
-- DataTable — ARIA semantics and screen reader contract _(p3)_
-- DataTable — RTL, bidi and Arabic content handling _(p3)_
-- EmptyState — core implementation and public API _(p2)_
-- EmptyState — keyboard interaction and focus management _(p2)_
-- EmptyState — ARIA semantics and screen reader contract _(p2)_
-- EmptyState — RTL, bidi and Arabic content handling _(p2)_
-- Meter — core implementation and public API _(p3)_
-- Meter — keyboard interaction and focus management _(p3)_
-- Meter — ARIA semantics and screen reader contract _(p3)_
-- Meter — RTL, bidi and Arabic content handling _(p3)_
-- Progress — core implementation and public API _(p1)_
-- Progress — keyboard interaction and focus management _(p1)_
-- Progress — ARIA semantics and screen reader contract _(p1)_
-- Progress — RTL, bidi and Arabic content handling _(p1)_
-- Skeleton — core implementation and public API _(p2)_
-- Skeleton — keyboard interaction and focus management _(p2)_
-- Skeleton — ARIA semantics and screen reader contract _(p2)_
-- Skeleton — RTL, bidi and Arabic content handling _(p2)_
-- Table — core implementation and public API _(p2)_
-- Table — keyboard interaction and focus management _(p2)_
-- Table — ARIA semantics and screen reader contract _(p2)_
-- Table — RTL, bidi and Arabic content handling _(p2)_
-- Timeline — core implementation and public API _(p3)_
-- Timeline — keyboard interaction and focus management _(p3)_
-- Timeline — ARIA semantics and screen reader contract _(p3)_
-- Timeline — RTL, bidi and Arabic content handling _(p3)_
+- Card — core implementation and public API _(feature · data-display · p3 · l)_
+- Card — keyboard interaction and focus management _(a11y · data-display · p3 · m)_
+- Card — ARIA semantics and screen reader contract _(a11y · data-display · p3 · m)_
+- Card — RTL, bidi and Arabic content handling _(i18n · data-display · p3 · m)_
+- CodeBlock — core implementation and public API _(feature · data-display · p3 · l)_
+- CodeBlock — keyboard interaction and focus management _(a11y · data-display · p3 · m)_
+- CodeBlock — ARIA semantics and screen reader contract _(a11y · data-display · p3 · m)_
+- CodeBlock — RTL, bidi and Arabic content handling _(i18n · data-display · p3 · m)_
+- DataTable — core implementation and public API _(feature · data-display · p3 · l)_
+- DataTable — keyboard interaction and focus management _(a11y · data-display · p3 · m)_
+- DataTable — ARIA semantics and screen reader contract _(a11y · data-display · p3 · m)_
+- DataTable — RTL, bidi and Arabic content handling _(i18n · data-display · p3 · m)_
+- EmptyState — core implementation and public API _(feature · data-display · p2 · l)_
+- EmptyState — keyboard interaction and focus management _(a11y · data-display · p2 · m)_
+- EmptyState — ARIA semantics and screen reader contract _(a11y · data-display · p2 · m)_
+- EmptyState — RTL, bidi and Arabic content handling _(i18n · data-display · p2 · m)_
+- Meter — core implementation and public API _(feature · data-display · p3 · l)_
+- Meter — keyboard interaction and focus management _(a11y · data-display · p3 · m)_
+- Meter — ARIA semantics and screen reader contract _(a11y · data-display · p3 · m)_
+- Meter — RTL, bidi and Arabic content handling _(i18n · data-display · p3 · m)_
+- Progress — core implementation and public API _(feature · data-display · p1 · l)_
+- Progress — keyboard interaction and focus management _(a11y · data-display · p1 · m)_
+- Progress — ARIA semantics and screen reader contract _(a11y · data-display · p1 · m)_
+- Progress — RTL, bidi and Arabic content handling _(i18n · data-display · p1 · m)_
+- Skeleton — core implementation and public API _(feature · data-display · p2 · l)_
+- Skeleton — keyboard interaction and focus management _(a11y · data-display · p2 · m)_
+- Skeleton — ARIA semantics and screen reader contract _(a11y · data-display · p2 · m)_
+- Skeleton — RTL, bidi and Arabic content handling _(i18n · data-display · p2 · m)_
+- Table — core implementation and public API _(feature · data-display · p2 · l)_
+- Table — keyboard interaction and focus management _(a11y · data-display · p2 · m)_
+- Table — ARIA semantics and screen reader contract _(a11y · data-display · p2 · m)_
+- Table — RTL, bidi and Arabic content handling _(i18n · data-display · p2 · m)_
+- Timeline — core implementation and public API _(feature · data-display · p3 · l)_
+- Timeline — keyboard interaction and focus management _(a11y · data-display · p3 · m)_
+- Timeline — ARIA semantics and screen reader contract _(a11y · data-display · p3 · m)_
+- Timeline — RTL, bidi and Arabic content handling _(i18n · data-display · p3 · m)_
 
 ## 06 · RTL & Arabic internationalization
 
 Bidi isolation, Arabic typography, numerals, calendars, pluralization, mirrored icons and a real device and screen-reader matrix for Arabic locales.
 
-- Define the Arabic accessibility terminology glossary _(p2)_
-- Add a Bidi component for embedded Latin content _(p2)_
-- Audit every icon for RTL mirroring and publish the registry _(p1)_
-- Support IME composition for Arabic and other input methods _(p1)_
-- Centralise direction-aware horizontal key mapping _(p1)_
-- Verify logical properties and inert against the browser baseline _(p2)_
-- Enforce logical properties with a lint rule and CI check _(p1)_
-- Publish the mirroring policy: what flips and what never does _(p2)_
-- Audit mixed Arabic/Latin content in every component _(p2)_
-- Resolve document direction on the server without a client flash _(p1)_
-- Format numerals per locale instead of relying on the font _(p1)_
-- Add locale-aware date formatting and a calendar abstraction _(p2)_
-- Document Hijri calendar support and its edge cases _(p3)_
-- Implement Arabic plural rules for counts and messages _(p2)_
-- Handle RTL scroll offsets consistently across browsers _(p2)_
-- Audit Arabic typography across every text size and token _(p1)_
-- Ship a self-hosted Arabic font strategy with no layout shift _(p1)_
-- Run an Arabic screen reader matrix and record the results _(p1)_
-- Translate the core documentation into Arabic _(p3)_
-- Generate RTL visual baselines for every story automatically _(p1)_
-- Build an RTL fixture app for manual and exploratory testing _(p3)_
+- Define the Arabic accessibility terminology glossary _(docs · rtl · p2 · s)_
+- Add a Bidi component for embedded Latin content _(i18n · rtl · p2 · s)_
+- Audit every icon for RTL mirroring and publish the registry _(i18n · rtl · p1 · m)_
+- Support IME composition for Arabic and other input methods _(i18n · rtl · p1 · m)_
+- Centralise direction-aware horizontal key mapping _(a11y · rtl · p1 · s · good first issue)_
+- Verify logical properties and inert against the browser baseline _(test · rtl · p2 · s)_
+- Enforce logical properties with a lint rule and CI check _(chore · rtl · p1 · s · good first issue)_
+- Publish the mirroring policy: what flips and what never does _(docs · rtl · p2 · s)_
+- Audit mixed Arabic/Latin content in every component _(i18n · rtl · p2 · m)_
+- Resolve document direction on the server without a client flash _(i18n · rtl · p1 · m)_
+- Format numerals per locale instead of relying on the font _(i18n · rtl · p1 · m)_
+- Add locale-aware date formatting and a calendar abstraction _(i18n · rtl · p2 · l)_
+- Document Hijri calendar support and its edge cases _(docs · rtl · p3 · s)_
+- Implement Arabic plural rules for counts and messages _(i18n · rtl · p2 · m)_
+- Handle RTL scroll offsets consistently across browsers _(i18n · rtl · p2 · s)_
+- Audit Arabic typography across every text size and token _(design · rtl · p1 · m)_
+- Ship a self-hosted Arabic font strategy with no layout shift _(i18n · rtl · p1 · l)_
+- Run an Arabic screen reader matrix and record the results _(a11y · rtl · p1 · l)_
+- Translate the core documentation into Arabic _(docs · rtl · p3 · l)_
+- Generate RTL visual baselines for every story automatically _(test · rtl · p1 · m)_
+- Build an RTL fixture app for manual and exploratory testing _(test · rtl · p3 · m)_
 
 ## 07 · Accessibility conformance
 
 WCAG 2.2 AA evidence rather than claims: keyboard-only, screen reader, forced-colors, zoom/reflow, text-spacing, reduced-motion and target-size audits, plus the ACR that records the results.
 
-- Validate accessible name computation for every component state _(p1)_
-- Pin the axe rule set and triage every suppressed rule _(p2)_
-- Remove color-only meaning from every component _(p1)_
-- Decide and document aria-disabled versus native disabled _(p2)_
-- Provide keyboard alternatives for every drag interaction _(p1)_
-- Audit focus appearance and focus not obscured _(p1)_
-- Verify contrast in hover, active, focus and disabled states _(p1)_
-- Make form errors identifiable, described and recoverable _(p1)_
-- Prove no keyboard traps outside intentional modals _(p1)_
-- Ensure visible labels match accessible names _(p1)_
-- Standardise landmarks and skip-link integration _(p1)_
-- Audit live-region usage across toasts, errors and async results _(p1)_
-- Announce asynchronous state changes exactly once _(p2)_
-- Publish the manual accessibility test plan _(p1)_
-- Audit motion for flashing, parallax and auto-play _(p2)_
-- Verify 320px reflow and 400% zoom across components _(p1)_
-- Handle focus and announcements on SPA route changes _(p2)_
-- Define the screen reader test matrix and per-component scripts _(p1)_
-- Publish an Accessibility Conformance Report (ACR/VPAT) _(p2)_
-- Verify status messages are announced without focus _(p2)_
-- Audit and enforce the 24px minimum target size _(p1)_
-- Pass the WCAG 1.4.12 text-spacing override test _(p2)_
-- Verify every component in Windows High Contrast (forced-colors) _(p1)_
-- Run axe against every Storybook story in CI _(p1)_
+- Validate accessible name computation for every component state _(a11y · a11y-audit · p1 · m)_
+- Pin the axe rule set and triage every suppressed rule _(test · a11y-audit · p2 · m)_
+- Remove color-only meaning from every component _(a11y · a11y-audit · p1 · m)_
+- Decide and document aria-disabled versus native disabled _(design · a11y-audit · p2 · s · needs: decision)_
+- Provide keyboard alternatives for every drag interaction _(a11y · a11y-audit · p1 · m)_
+- Audit focus appearance and focus not obscured _(a11y · a11y-audit · p1 · m)_
+- Verify contrast in hover, active, focus and disabled states _(a11y · a11y-audit · p1 · m)_
+- Make form errors identifiable, described and recoverable _(a11y · a11y-audit · p1 · m)_
+- Prove no keyboard traps outside intentional modals _(a11y · a11y-audit · p1 · s)_
+- Ensure visible labels match accessible names _(a11y · a11y-audit · p1 · s)_
+- Standardise landmarks and skip-link integration _(a11y · a11y-audit · p1 · s)_
+- Audit live-region usage across toasts, errors and async results _(a11y · a11y-audit · p1 · m)_
+- Announce asynchronous state changes exactly once _(a11y · a11y-audit · p2 · m)_
+- Publish the manual accessibility test plan _(docs · a11y-audit · p1 · m)_
+- Audit motion for flashing, parallax and auto-play _(a11y · a11y-audit · p2 · s)_
+- Verify 320px reflow and 400% zoom across components _(a11y · a11y-audit · p1 · m)_
+- Handle focus and announcements on SPA route changes _(a11y · a11y-audit · p2 · m)_
+- Define the screen reader test matrix and per-component scripts _(a11y · a11y-audit · p1 · l)_
+- Publish an Accessibility Conformance Report (ACR/VPAT) _(docs · a11y-audit · p2 · l)_
+- Verify status messages are announced without focus _(a11y · a11y-audit · p2 · m)_
+- Audit and enforce the 24px minimum target size _(a11y · a11y-audit · p1 · s)_
+- Pass the WCAG 1.4.12 text-spacing override test _(a11y · a11y-audit · p2 · s)_
+- Verify every component in Windows High Contrast (forced-colors) _(a11y · a11y-audit · p1 · m)_
+- Run axe against every Storybook story in CI _(test · a11y-audit · p1 · m)_
 
 ## 08 · Documentation & Storybook
 
 A docs site built from the same source as Storybook: usage guidance, keyboard tables, ARIA contracts, RTL notes, code that can be copied and run, and a published accessibility statement.
 
-- Publish an accessibility statement for the library and docs site _(p1)_
-- Create the component documentation template _(p1)_
-- Document how to write docs (voice, structure, examples) _(p3)_
-- Write the foundations docs: tokens, direction, typography and focus _(p1)_
-- Generate keyboard tables from a single source of truth _(p2)_
-- Add link and anchor checking to the docs build _(p1)_
-- Publish llms.txt and machine-readable API summaries _(p3)_
-- Write migration guides from MUI, Chakra UI and shadcn/ui _(p2)_
-- Scaffold the documentation site and choose its framework _(p1)_
-- Generate API tables from TypeScript types _(p2)_
-- Add the Arabic docs locale with an RTL-aware layout _(p3)_
-- Make every docs example runnable in a sandbox _(p2)_
-- Add full-text search with Arabic support _(p2)_
-- Embed live stories in the docs pages _(p2)_
-- Version the documentation and keep old versions buildable _(p2)_
-- Publish a human-readable changelog from changesets _(p2)_
+- Publish an accessibility statement for the library and docs site _(docs · docs · p1 · m)_
+- Create the component documentation template _(docs · docs · p1 · m)_
+- Document how to write docs (voice, structure, examples) _(docs · docs · p3 · s)_
+- Write the foundations docs: tokens, direction, typography and focus _(docs · docs · p1 · m)_
+- Generate keyboard tables from a single source of truth _(docs · docs · p2 · m)_
+- Add link and anchor checking to the docs build _(chore · docs · p1 · s · good first issue)_
+- Publish llms.txt and machine-readable API summaries _(docs · docs · p3 · s)_
+- Write migration guides from MUI, Chakra UI and shadcn/ui _(docs · docs · p2 · m)_
+- Scaffold the documentation site and choose its framework _(docs · docs · p1 · l · needs: decision)_
+- Generate API tables from TypeScript types _(docs · docs · p2 · m)_
+- Add the Arabic docs locale with an RTL-aware layout _(docs · docs · p3 · l)_
+- Make every docs example runnable in a sandbox _(docs · docs · p2 · m)_
+- Add full-text search with Arabic support _(docs · docs · p2 · m)_
+- Embed live stories in the docs pages _(docs · docs · p2 · m)_
+- Version the documentation and keep old versions buildable _(docs · docs · p2 · m)_
+- Publish a human-readable changelog from changesets _(docs · docs · p2 · s)_
 
 ## 09 · Quality engineering
 
 The test strategy: coverage per directory, mutation testing of the tricky primitives, visual regression for LTR/RTL/dark, browser matrix, flake control, SSR and published-tarball tests.
 
-- Run the browser matrix: Chromium, Firefox and WebKit _(p1)_
-- Move layout-dependent component tests to browser mode _(p3)_
-- Add bundle size budgets and per-import measurement _(p2)_
-- Cache dependencies and Playwright browsers in CI _(p3)_
-- Enforce coverage thresholds per directory, not globally _(p2)_
-- Create Arabic and mixed-script test fixtures _(p1)_
-- Define the flake policy: retries, quarantine and ownership _(p2)_
-- Run mutation testing on the accessibility primitives _(p2)_
-- Shard the Playwright suite to keep CI under ten minutes _(p2)_
-- Snapshot the public API surface _(p2)_
-- Add render-count and interaction-latency budgets for overlays _(p3)_
-- Automate dependency updates with a review policy _(p2)_
-- Render every component on the server in CI _(p2)_
-- Run stories as tests with the Storybook test runner _(p2)_
-- Standardise fake-timer usage for animation and debounce tests _(p2)_
-- Gate type-level regressions in CI _(p2)_
-- Set up Playwright visual regression for LTR, RTL and dark mode _(p1)_
-- Test the published tarball, not the source tree _(p1)_
+- Run the browser matrix: Chromium, Firefox and WebKit _(test · testing · p1 · m)_
+- Move layout-dependent component tests to browser mode _(test · testing · p3 · m)_
+- Add bundle size budgets and per-import measurement _(perf · testing · p2 · m)_
+- Cache dependencies and Playwright browsers in CI _(chore · testing · p3 · s · good first issue)_
+- Enforce coverage thresholds per directory, not globally _(test · testing · p2 · m)_
+- Create Arabic and mixed-script test fixtures _(test · testing · p1 · m · good first issue)_
+- Define the flake policy: retries, quarantine and ownership _(chore · testing · p2 · s)_
+- Run mutation testing on the accessibility primitives _(test · testing · p2 · m)_
+- Shard the Playwright suite to keep CI under ten minutes _(perf · testing · p2 · s)_
+- Snapshot the public API surface _(test · testing · p2 · s)_
+- Add render-count and interaction-latency budgets for overlays _(perf · testing · p3 · m)_
+- Automate dependency updates with a review policy _(chore · testing · p2 · s)_
+- Render every component on the server in CI _(test · testing · p2 · m)_
+- Run stories as tests with the Storybook test runner _(test · testing · p2 · m)_
+- Standardise fake-timer usage for animation and debounce tests _(test · testing · p2 · s)_
+- Gate type-level regressions in CI _(test · testing · p2 · m)_
+- Set up Playwright visual regression for LTR, RTL and dark mode _(test · testing · p1 · l)_
+- Test the published tarball, not the source tree _(test · testing · p1 · m)_
 
 ## 10 · Release & distribution
 
 Changesets, provenance-signed publishing, exports validation, tree-shaking, size budgets, docs deployment and a support policy that states exactly what versions and browsers are covered.
 
-- Adopt Changesets with an explicit 0.x versioning policy _(p0)_
-- Decide and document how CSS reaches consumers _(p1)_
-- Audit licenses of the runtime dependency tree _(p2)_
-- Assert the published file list on every pack _(p3)_
-- Define the React and React DOM peer dependency policy _(p1)_
-- Validate the package with publint and Are The Types Wrong _(p1)_
-- Expose stable per-component subpath exports _(p2)_
-- Publish to npm with provenance and a protected release workflow _(p1)_
-- Add a canary release channel for pull requests _(p2)_
-- Smoke-test each published release from the registry _(p2)_
-- Generate release notes that highlight accessibility impact _(p2)_
-- Add SECURITY.md and a private disclosure process _(p2)_
-- Ship correct source maps and declaration maps _(p3)_
-- Deploy Storybook to Vercel for main and pull requests _(p1)_
-- Write the version and browser support policy _(p2)_
-- Verify tree-shaking per component import _(p2)_
+- Adopt Changesets with an explicit 0.x versioning policy _(chore · release · p0 · m)_
+- Decide and document how CSS reaches consumers _(design · release · p1 · m · needs: decision)_
+- Audit licenses of the runtime dependency tree _(chore · release · p2 · s)_
+- Assert the published file list on every pack _(chore · release · p3 · s · good first issue)_
+- Define the React and React DOM peer dependency policy _(chore · release · p1 · s)_
+- Validate the package with publint and Are The Types Wrong _(test · release · p1 · s)_
+- Expose stable per-component subpath exports _(chore · release · p2 · m)_
+- Publish to npm with provenance and a protected release workflow _(chore · release · p1 · m)_
+- Add a canary release channel for pull requests _(chore · release · p2 · m)_
+- Smoke-test each published release from the registry _(test · release · p2 · m)_
+- Generate release notes that highlight accessibility impact _(docs · release · p2 · s)_
+- Add SECURITY.md and a private disclosure process _(docs · release · p2 · s)_
+- Ship correct source maps and declaration maps _(chore · release · p3 · s)_
+- Deploy Storybook to Vercel for main and pull requests _(chore · release · p1 · m)_
+- Write the version and browser support policy _(docs · release · p2 · s)_
+- Verify tree-shaking per component import _(perf · release · p2 · m)_
 
 ## 11 · Adoption, theming & DX
 
 What it takes to adopt the library: theming and dark mode, framework guides (Next.js RSC, Vite, Remix), Figma token sync, codemods and a starter template that ships RTL by default.
 
-- Set up a codemod pipeline for breaking changes _(p3)_
-- Write a contributor guide specific to accessibility work _(p1)_
-- Ship a dark mode recipe with no first-paint flash _(p1)_
-- Add Vite, Remix and plain React integration guides _(p2)_
-- Write the hydration troubleshooting guide _(p2)_
-- Document integrating third-party icon sets _(p3)_
-- Write the Next.js App Router integration guide _(p1)_
-- Build an interactive props playground on the docs site _(p3)_
-- Publish a starter template with RTL and dark mode preconfigured _(p2)_
-- Document using the library alongside a consumer Tailwind build _(p2)_
-- Document the theming API and token override contract _(p1)_
-- Sync design tokens from Figma and detect drift _(p3)_
-- Provide a high-contrast theme beyond forced-colors support _(p2)_
-- Document the Arabic translation and review workflow _(p2)_
-- Set an accessibility bug triage policy and response target _(p2)_
-- Run usability sessions with Arabic screen reader users _(p2)_
+- Set up a codemod pipeline for breaking changes _(chore · dx · p3 · m)_
+- Write a contributor guide specific to accessibility work _(docs · dx · p1 · m)_
+- Ship a dark mode recipe with no first-paint flash _(feature · dx · p1 · m)_
+- Add Vite, Remix and plain React integration guides _(docs · dx · p2 · m)_
+- Write the hydration troubleshooting guide _(docs · dx · p2 · s)_
+- Document integrating third-party icon sets _(docs · dx · p3 · s)_
+- Write the Next.js App Router integration guide _(docs · dx · p1 · m)_
+- Build an interactive props playground on the docs site _(feature · dx · p3 · m)_
+- Publish a starter template with RTL and dark mode preconfigured _(chore · dx · p2 · m)_
+- Document using the library alongside a consumer Tailwind build _(docs · dx · p2 · s)_
+- Document the theming API and token override contract _(docs · dx · p1 · m)_
+- Sync design tokens from Figma and detect drift _(chore · dx · p3 · l)_
+- Provide a high-contrast theme beyond forced-colors support _(design · dx · p2 · m)_
+- Document the Arabic translation and review workflow _(docs · dx · p2 · s)_
+- Set an accessibility bug triage policy and response target _(docs · dx · p2 · s)_
+- Run usability sessions with Arabic screen reader users _(a11y · dx · p2 · l)_
 
