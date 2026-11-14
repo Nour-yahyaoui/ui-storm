@@ -68,18 +68,23 @@ test.describe("dialog", () => {
     await expect(dialog).toBeVisible();
     await expect(dialog).toHaveAttribute("aria-labelledby", "delete-project-title");
 
-    // Focus starts inside the dialog and never leaves while it is modal. Focus on
-    // the dialog element itself counts as inside: the platform focuses the dialog
-    // when no descendant asks for it.
+    // Focus starts inside the dialog and stays there. Two exceptions are not
+    // escapes, and pretending otherwise makes the test lie:
+    //   - focus on the dialog element itself (the platform focuses it when no
+    //     descendant asks for it);
+    //   - focus on <body>/<html>, which is Chrome handing focus to the browser
+    //     chrome at the end of the dialog's tab cycle. The next Tab comes back
+    //     into the dialog, and no page control outside it can be reached.
     const trace: string[] = [];
     for (let i = 0; i < 6; i += 1) {
       await page.keyboard.press("Tab");
       const state = await page.evaluate(() => {
         const active = document.activeElement as HTMLElement | null;
         const open = document.querySelector("dialog[open]");
+        const isChrome = active === null || active === document.body || active === document.documentElement;
         const inside = Boolean(
           active && open && (open === active || open.contains(active)),
-        );
+        ) || isChrome;
         const description = active
           ? `${active.tagName.toLowerCase()}.${String(active.className || "")}`.split(" ")[0]
           : "none";
@@ -89,6 +94,15 @@ test.describe("dialog", () => {
     }
     const escaped = trace.filter((entry) => entry.includes("OUTSIDE"));
     expect(escaped, `focus left the dialog: ${trace.join(" | ")}`).toEqual([]);
+    // And the page behind the dialog cannot be reached at all.
+    expect(
+      await page.evaluate(() => {
+        const link = document.querySelector('nav a');
+        link?.focus();
+        return document.activeElement === link;
+      }),
+      "a page control outside the modal dialog received focus",
+    ).toBe(false);
 
     // The dialog is in the top layer, which is what makes the rest of the page inert.
     expect(await dialog.evaluate((node: HTMLDialogElement) => node.matches(":modal"))).toBe(true);

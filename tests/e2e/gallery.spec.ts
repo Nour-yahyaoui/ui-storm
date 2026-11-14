@@ -111,7 +111,8 @@ test("server-rendered markup is present without running scripts", async ({ brows
   await page.goto("/components/tabs");
 
   // Every panel is readable when scripting is off; nothing is trapped behind JS.
-  await expect(page.locator('[role="tabpanel"]')).toHaveCount(3);
+  // The tabs page demonstrates two widgets: three horizontal and three vertical panels.
+  await expect(page.locator('[role="tabpanel"]')).toHaveCount(6);
   for (const panel of await page.locator('[role="tabpanel"]').all()) {
     await expect(panel).toBeVisible();
   }
