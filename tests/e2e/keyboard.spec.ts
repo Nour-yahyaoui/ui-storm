@@ -145,8 +145,16 @@ test.describe("form controls", () => {
     const disabled = page.getByRole("button", { name: "Disabled" });
     const unavailable = page.getByRole("button", { name: "Unavailable" });
 
+    // Playwright reports both as "disabled", which is the correct semantic: one
+    // cannot be used, the other cannot be used *yet*. The difference that matters
+    // is discoverability — aria-disabled stays in the tab order.
     await expect(disabled).toBeDisabled();
     await expect(unavailable).toHaveAttribute("aria-disabled", "true");
-    await expect(unavailable).toBeEnabled();
+
+    await unavailable.focus();
+    expect(
+      await page.evaluate(() => document.activeElement?.textContent?.trim()),
+      "the aria-disabled button must still be reachable by keyboard",
+    ).toBe("Unavailable");
   });
 });
