@@ -50,6 +50,10 @@ MILESTONES = [
      "Payload size, render cost and compression: what the library is allowed to cost a page."),
     ("security", "Security",
      "Escaping, CSP compatibility, form security and dependency auditing."),
+    ("conformance", "WCAG 2.2 conformance dossier",
+     "One entry per A and AA success criterion: what it means here, how it is checked, and what a reviewer must confirm by hand."),
+    ("integrations", "Framework integrations",
+     "Making the components usable from the server frameworks people actually run, rather than from Actix alone."),
 ]
 
 LABELS = [
@@ -59,7 +63,8 @@ LABELS = [
     "area: tokens", "area: direction", "area: forms", "area: overlays",
     "area: navigation", "area: feedback", "area: display", "area: gallery",
     "area: testing", "area: docs", "area: release", "area: performance",
-    "area: security", "good first issue", "help wanted", "a11y", "rtl",
+    "area: security", "area: conformance", "area: integrations", "area: i18n",
+    "good first issue", "help wanted", "a11y", "rtl",
 ]
 
 COMPONENTS = [
@@ -523,6 +528,393 @@ HARDENING = [
 ]
 
 
+# --------------------------------------------------------------------------
+# Second wave
+#
+# The first 332 issues covered the 30 planned components (seven aspects each),
+# hardening of the six shipped ones, and the platform. The wave below adds work
+# that is genuinely new rather than more instances of the same thing:
+#
+#   * three new per-component aspects (render cost, localisation, examples)
+#     for every component, shipped or planned  -> 36 x 3
+#   * 22 components the matrix did not contain               -> 22 x 7
+#   * a locale-by-locale RTL dossier
+#   * one issue per WCAG 2.2 A/AA success criterion
+#   * a browser and assistive-technology matrix
+#   * framework integrations
+#   * guides, references and playbooks
+#   * operational work the gallery still needs
+# --------------------------------------------------------------------------
+
+EXTRA_ASPECTS = [
+    ("perf", "performance", "performance", "measure and cap its render cost", [
+        "A criterion benchmark in `crates/ui-storm/benches/{slug}.rs` renders {name} 10,000 times.",
+        "The budget is written down before the number: at most one allocation per instance beyond id construction.",
+        "The measured cost is recorded in `docs/performance.md` and shown on the gallery page.",
+        "CI fails when the benchmark regresses by more than 20% against the recorded baseline.",
+    ]),
+    ("locale", "direction", "direction", "localise the strings it renders", [
+        "Every string {name} renders itself (close labels, loading words, required markers, error prefixes) is injectable.",
+        "Nothing English is hard-coded in the template; the English default is documented as a default.",
+        "Arabic and Hebrew strings render without clipping, with the label in the page direction.",
+        "Pluralisation belongs to the caller: the component takes the finished string, never a count.",
+        "A test renders {name} with Arabic strings and asserts the resulting accessible name.",
+    ]),
+    ("example", "docs", "docs", "ship a runnable example", [
+        "`examples/{slug}.rs` starts with `cargo run --example {slug}` and renders {name} in both directions.",
+        "The example depends only on the workspace crates and adds no optional Actix features.",
+        "It is linked from the component's gallery page and listed in `examples/README.md`.",
+        "A CI step builds every example, so one cannot rot unnoticed.",
+    ]),
+]
+
+NEW_COMPONENTS = [
+    {"slug": "menubar", "name": "Menubar", "milestone": "overlays", "area": "overlays",
+     "element": "[role=\"menubar\"] of menu buttons", "role": "menubar, menu, menuitem",
+     "keyboard": "Left/Right move between top-level menus, Down opens one, Escape closes and returns focus.",
+     "aria": "aria-haspopup on each menu button, aria-expanded on the open one, roving tabindex across the bar.",
+     "rtl": "Left and Right swap in RTL, and the bar fills from the inline start.",
+     "why": "Application menus are the one place where horizontal arrow movement is expected at the top level."},
+    {"slug": "toolbar", "name": "Toolbar", "milestone": "overlays", "area": "overlays",
+     "element": "[role=\"toolbar\"]", "role": "toolbar",
+     "keyboard": "Arrow keys move between controls, Home/End jump, Tab leaves the toolbar as one stop.",
+     "aria": "A label on the toolbar, and aria-pressed on toggle buttons that are not menus.",
+     "rtl": "Arrow keys follow reading direction; the toolbar wraps from the inline start.",
+     "why": "Editor and table toolbars are a single tab stop in every good editor, and a tab-storm in most others."},
+    {"slug": "segmented-control", "name": "Segmented control", "milestone": "forms", "area": "forms",
+     "element": "<fieldset> of radios styled as segments", "role": "radiogroup",
+     "keyboard": "Arrow keys move and select, Tab enters and leaves the group as one stop.",
+     "aria": "Each segment is a radio with a label; the group has a legend or an accessible name.",
+     "rtl": "Segments fill from the inline start, and the arrow mapping mirrors.",
+     "why": "Two to five mutually exclusive options read better as segments than as a select, but only if the radio semantics survive."},
+    {"slug": "number-field", "name": "Number field", "milestone": "forms", "area": "forms",
+     "element": "<input type=\"number\"> with optional steppers", "role": "spinbutton",
+     "keyboard": "Up/Down step, PageUp/PageDown jump, Home/End to the bounds; typing is never blocked.",
+     "aria": "A label, aria-valuemin/max/now when steppers are custom, and a hint for the accepted format.",
+     "rtl": "The digits and the minus sign keep their own direction; the steppers sit at the inline end.",
+     "why": "Quantity and price fields break for people who type, paste or use a screen reader unless the native input is kept."},
+    {"slug": "otp-input", "name": "Verification code", "milestone": "forms", "area": "forms",
+     "element": "A group of single-character inputs inside a fieldset", "role": "group with six textboxes",
+     "keyboard": "Typing advances, Backspace retreats, Left/Right move, paste fills the whole code.",
+     "aria": "The group is named 'verification code', autocomplete=\"one-time-code\" is set once, and the code is announced as a whole.",
+     "rtl": "The digit boxes run inline-start to inline-end, and each box holds one digit in the page direction.",
+     "why": "Six separate inputs are hostile to screen readers and password managers unless the group is designed as one control."},
+    {"slug": "tag-input", "name": "Tag input", "milestone": "forms", "area": "forms",
+     "element": "An input plus a list of removable chips", "role": "combobox with a list of buttons",
+     "keyboard": "Enter adds a tag, Backspace on an empty input removes the last one, Left/Right walk the chips.",
+     "aria": "Each chip's remove control has a name that names its tag; the input keeps the group's label.",
+     "rtl": "Chips wrap from the inline start and each chip's remove button sits at its inline end.",
+     "why": "Labels, recipients and filters are all tag inputs, and the removal control is the part everyone forgets to name."},
+    {"slug": "rating", "name": "Rating", "milestone": "forms", "area": "forms",
+     "element": "A radiogroup of star radios", "role": "radiogroup",
+     "keyboard": "Arrow keys change the value, Tab leaves the group, Space selects the focused star.",
+     "aria": "The value is stated in words as well as stars ('3 of 5'), and each radio has a real label.",
+     "rtl": "Stars fill from the inline start; the numeric value never mirrors.",
+     "why": "A five-star widget made of spans is the classic case of a control that looks obvious and is invisible to assistive technology."},
+    {"slug": "color-field", "name": "Colour field", "milestone": "forms", "area": "forms",
+     "element": "<input type=\"color\"> paired with a text field", "role": "textbox and a native colour input",
+     "keyboard": "The text field takes typed hex values; the native picker keeps its own keys.",
+     "aria": "The hex value is the accessible value, and the swatch is never the only way to read it.",
+     "rtl": "The hex value stays left to right inside an RTL row.",
+     "why": "Theme editors and brand settings need a colour input that a keyboard user can actually set."},
+    {"slug": "calendar", "name": "Calendar", "milestone": "forms", "area": "forms",
+     "element": "[role=\"grid\"] of day cells", "role": "grid with gridcells",
+     "keyboard": "Arrows move by day and week, PageUp/PageDown by month, Home/End to the week's ends, Enter selects.",
+     "aria": "A month heading, weekday column headers, aria-selected on the chosen day, and the full date as each cell's name.",
+     "rtl": "The weekday columns run right to left; ArrowRight moves to the previous day.",
+     "why": "Date pickers are the most-used complex widget in forms, and the grid semantics are what make them usable."},
+    {"slug": "time-field", "name": "Time field", "milestone": "forms", "area": "forms",
+     "element": "<input type=\"time\"> with a text fallback", "role": "combobox or textbox",
+     "keyboard": "The native control keeps its segment editing; the fallback documents its own keys.",
+     "aria": "The accepted format is stated in a linked hint, not in a placeholder.",
+     "rtl": "The time value keeps its own direction while the label follows the page.",
+     "why": "Scheduling needs a time input that respects 12/24-hour locale conventions without inventing a new widget."},
+    {"slug": "listbox", "name": "Listbox", "milestone": "forms", "area": "forms",
+     "element": "[role=\"listbox\"] of [role=\"option\"]", "role": "listbox, option",
+     "keyboard": "Arrows move, Home/End jump, typeahead selects by prefix, Space toggles in a multi-select.",
+     "aria": "aria-activedescendant or roving focus, aria-selected per option, aria-multiselectable when it applies.",
+     "rtl": "Options align to the inline start, and the arrow mapping follows the list direction.",
+     "why": "A standalone listbox is the right control for long option sets where a native select would hide too much."},
+    {"slug": "split-button", "name": "Split button", "milestone": "navigation", "area": "navigation",
+     "element": "Two adjacent buttons, the second opening a menu", "role": "button plus menu button",
+     "keyboard": "Tab reaches both, Down opens the menu, Escape closes and returns focus.",
+     "aria": "The primary button and the menu button have distinct names; the menu button announces aria-expanded.",
+     "rtl": "The menu aligns to the inline end and the chevron mirrors.",
+     "why": "One default action with a few alternatives is common, and merging them into one control is an accessibility mistake."},
+    {"slug": "banner", "name": "Banner", "milestone": "feedback", "area": "feedback",
+     "element": "<section> with a heading, optionally dismissible", "role": "region",
+     "keyboard": "The dismiss control is a normal button; the banner never steals focus on load.",
+     "aria": "The banner is named, its dismissal is not required to complete a task, and the state is not colour-only.",
+     "rtl": "The icon sits at the inline start and the dismiss control at the inline end.",
+     "why": "Site-wide notices are the easiest content to make keyboard-hostile and the hardest to dismiss by accident."},
+    {"slug": "notification-center", "name": "Notification centre", "milestone": "feedback", "area": "feedback",
+     "element": "A popover with a list of notifications", "role": "dialog with a list",
+     "keyboard": "The trigger announces the unread count; Escape closes and returns focus; each item is a link.",
+     "aria": "The count is in the trigger's name, and the list is announced as a list, not as a live region on every render.",
+     "rtl": "The panel anchors to the inline end and unread dots sit at the inline start of each row.",
+     "why": "Unread counts spoken as bare numbers are noise; the count belongs in the name of the control that reveals them."},
+    {"slug": "theme-switcher", "name": "Theme switcher", "milestone": "display", "area": "display",
+     "element": "A radiogroup or a set of links", "role": "radiogroup or navigation",
+     "keyboard": "Arrows within a radiogroup, Tab within links; the choice survives a reload.",
+     "aria": "The current theme is announced as checked or as aria-current, never only as a filled swatch.",
+     "rtl": "The control mirrors with the page; the theme names do not.",
+     "why": "Every product that ships a dark theme ships this control, and half of them make it a colour-only toggle."},
+    {"slug": "language-switcher", "name": "Language switcher", "milestone": "navigation", "area": "navigation",
+     "element": "A list of links, each with lang and hreflang", "role": "navigation",
+     "keyboard": "Plain links; Tab walks them; the current language is not a link.",
+     "aria": "Each link carries lang in the target language and hreflang for crawlers; the current one is marked.",
+     "rtl": "The list order follows the page, while each label renders in its own direction.",
+     "why": "Switching to Arabic is the first thing an Arabic user does, and it is usually the least accessible control on the page."},
+    {"slug": "table-of-contents", "name": "Table of contents", "milestone": "navigation", "area": "navigation",
+     "element": "<nav> with nested lists of anchors", "role": "navigation",
+     "keyboard": "Plain anchors; the current section is not focusable.",
+     "aria": "aria-current=\"true\" as the section changes, with a label that distinguishes it from the main navigation.",
+     "rtl": "Indentation uses padding-inline-start, so nesting deepens towards the inline end.",
+     "why": "Long documentation needs in-page navigation that does not become a second tab order."},
+    {"slug": "timeline", "name": "Timeline", "milestone": "display", "area": "display",
+     "element": "<ol> of events with time elements", "role": "list",
+     "keyboard": "Static content; any action inside an event is a normal control.",
+     "aria": "Each event's time is a <time datetime>; the order is in the markup, not only in the layout.",
+     "rtl": "The rail and the markers sit at the inline start of the column.",
+     "why": "Audit logs and activity feeds must stay readable in linear order, whatever the visual rail does."},
+    {"slug": "description-list", "name": "Description list", "milestone": "display", "area": "display",
+     "element": "<dl> of <dt> and <dd>", "role": "list with term/definition pairs",
+     "keyboard": "Nothing: it is a reading surface.",
+     "aria": "Terms and definitions are in the DOM in pairs, which is what makes a summary readable by a screen reader.",
+     "rtl": "Pairs stack inline-start; a two-column layout uses logical sizing.",
+     "why": "Checkout summaries and settings reviews are key/value data, and divs lose the association."},
+    {"slug": "skeleton", "name": "Skeleton", "milestone": "display", "area": "display",
+     "element": "A decorative placeholder with a status label", "role": "none or status",
+     "keyboard": "Nothing: a skeleton is never focusable.",
+     "aria": "aria-hidden when the real content announces its own loading; otherwise one polite status, not one per shape.",
+     "rtl": "Shimmer direction is direction-neutral; spacing is logical.",
+     "why": "Loading placeholders that are announced ninety times are worse than no placeholder at all."},
+    {"slug": "metric-card", "name": "Metric card", "milestone": "display", "area": "display",
+     "element": "<section> with a heading, a value and a trend", "role": "region",
+     "keyboard": "Nothing unless the card links somewhere; then the link has its own name.",
+     "aria": "The trend is stated in words ('up 12 percent'), never by an arrow alone.",
+     "rtl": "The value and its unit keep their own direction; the trend arrow mirrors only when it is directional.",
+     "why": "Dashboards are read with screen readers too, and '▲ 12%' is announced as 'black up-pointing triangle twelve percent'."},
+    {"slug": "inline-edit", "name": "Inline edit", "milestone": "forms", "area": "forms",
+     "element": "A button that becomes a text field", "role": "button, then textbox",
+     "keyboard": "Enter or Space starts editing, Escape cancels and restores focus, Enter saves.",
+     "aria": "The button's name says what will be edited; the field is labelled; the change is announced.",
+     "rtl": "The field inherits the row's direction; the action buttons sit at the inline end.",
+     "why": "Renaming a file in place is a common need that usually loses the value when the user presses Escape."},
+    {"slug": "form-wizard", "name": "Form wizard", "milestone": "navigation", "area": "navigation",
+     "element": "A stepper plus one visible form step at a time", "role": "navigation with a form per step",
+     "keyboard": "Tab order stays inside the current step; moving forward validates and focuses the error summary.",
+     "aria": "The step is announced in the heading, completed steps are links, and the summary is the only alert.",
+     "rtl": "Step connectors and back/next glyphs mirror; the step order stays semantic.",
+     "why": "Multi-step forms are where validation, focus management and navigation all fail at once."},
+    {"slug": "dropzone", "name": "Drop zone", "milestone": "forms", "area": "forms",
+     "element": "A labelled file input with a visual drop area", "role": "button (native file input)",
+     "keyboard": "The native input is the keyboard path; dragging is never the only way (WCAG 2.5.7).",
+     "aria": "The zone is described, not named, and the selected files are listed as text.",
+     "rtl": "The zone and the file list align to the inline start.",
+     "why": "Drag and drop is the canonical 2.5.7 failure: the only way to do it is with a pointer."},
+    {"slug": "resizable-split", "name": "Resizable split", "milestone": "display", "area": "display",
+     "element": "Two panels with a [role=\"separator\"] handle", "role": "separator",
+     "keyboard": "Arrows resize, Home/End collapse or expand, Enter toggles.",
+     "aria": "aria-valuenow/min/max on the separator, orientation declared, and the panes named.",
+     "rtl": "Arrow keys move the handle in the reading direction; the collapsed side follows inline-start.",
+     "why": "Split views are common in editors, and a divider that only responds to dragging is unusable without a mouse."},
+    {"slug": "sortable-list", "name": "Sortable list", "milestone": "display", "area": "display",
+     "element": "<ol> with move-up and move-down buttons", "role": "list with buttons",
+     "keyboard": "Move buttons are the keyboard equivalent of dragging; the new position is announced.",
+     "aria": "Each item's position is announced after a move, and the buttons are named with their item.",
+     "rtl": "The move buttons sit at the inline end and the order stays semantic.",
+     "why": "Reordering is used in every settings screen with priorities, and pointer-only reordering is another 2.5.7 failure."},
+    {"slug": "search-field", "name": "Search field", "milestone": "forms", "area": "forms",
+     "element": "<input type=\"search\"> with a clear button and a result count", "role": "searchbox",
+     "keyboard": "Enter submits, Escape clears, the clear button is reachable by Tab.",
+     "aria": "The result count is a polite status, and the clear button has a name that mentions what it clears.",
+     "rtl": "The magnifier is not mirrored; the clear control sits at the inline end.",
+     "why": "Search is the most-used control on documentation sites and the one where a 0-result state is most often silent."},
+]
+
+
+LOCALES = [
+    ("ar", "Arabic", "Naskh and Kufi stacks, harakat above the baseline, and a line height that does not clip them"),
+    ("he", "Hebrew", "niqqud and dagesh marks, and the mirroring of brackets in mixed Hebrew/Latin rows"),
+    ("fa", "Persian", "Nastaliq fallbacks, Persian digits (۰۱۲۳), and the ZWNJ that keeps compound words joined"),
+    ("ur", "Urdu", "Nastaliq's taller line boxes and English brand names flowing inside Urdu sentences"),
+    ("ps", "Pashto", "the additional Pashto letters and its own punctuation (٫ ، ؛)"),
+    ("sd", "Sindhi", "the extended Sindhi letter set and the extra diacritic height it needs"),
+    ("ug", "Uyghur", "Arabic-script Uyghur letters (ئۆ ۈ) and Latin-script product names inside them"),
+    ("yi", "Yiddish", "Hebrew script with wide Latin-influenced vowels and its own numeral conventions"),
+    ("dv", "Dhivehi", "Thaana right-to-left letters with left-to-right numerals: the hardest bidi case we support"),
+    ("ckb", "Sorani Kurdish", "the Kurdish Arabic letters (ڕ ڵ ێ) and the ZWNJ that distinguishes words"),
+    ("prs", "Dari", "digits and phrasing that differ from Iranian Persian inside the same interface"),
+    ("az-Arab", "Azerbaijani in Arabic script", "a script subtag that overrides an LTR base language: the case that proves the resolution rule"),
+    ("nqo", "N'Ko", "a right-to-left script with its own digits and almost no default font coverage"),
+    ("syr", "Syriac", "right-to-left joining behaviour with almost no default font coverage"),
+]
+
+LOCALE_SHARED = [
+    ("Bidi isolation of user-supplied strings", "Names, file names, addresses and code arrive in the wrong visual order unless they are isolated; pick one mechanism and apply it everywhere."),
+    ("RTL geometry baselines", "Snapshots of every component in both directions, so an accidental physical property shows up as a diff rather than as a bug report."),
+    ("Digit policy for values", "Arabic-Indic versus Western digits is a locale decision; decide where it is applied (formatting, never layout) and encode it once."),
+    ("Table and grid column order", "Columns follow the document direction, and numeric columns stay aligned and readable in both."),
+    ("Font stack coverage", "A stack that renders all fourteen scripts without a webfont, and a documented optional webfont path."),
+    ("Locale switching without losing state", "Changing language keeps the form values, the scroll position and the current step."),
+]
+
+WCAG = [
+    ("1.1.1", "Non-text Content", "A", "Every icon that carries meaning has a text alternative; decorative glyphs are aria-hidden."),
+    ("1.2.1", "Audio-only and Video-only (Prerecorded)", "A", "Any media the gallery ships has a text alternative beside it."),
+    ("1.2.2", "Captions (Prerecorded)", "A", "If a component page ever adds video, captions are part of the page, not an afterthought."),
+    ("1.2.3", "Audio Description or Media Alternative (Prerecorded)", "A", "The same rule for the visual track of any example media."),
+    ("1.3.1", "Info and Relationships", "A", "Structure lives in the markup: headings, lists, tables, fieldsets, labels."),
+    ("1.3.2", "Meaningful Sequence", "A", "DOM order matches the reading order in both directions."),
+    ("1.3.3", "Sensory Characteristics", "A", "No instruction relies on 'the round button' or 'the button on the right'."),
+    ("1.4.1", "Use of Color", "A", "No state is conveyed by colour alone, in any component."),
+    ("1.4.2", "Audio Control", "A", "Nothing in the library plays audio; the rule is documented so an example cannot break it."),
+    ("2.1.1", "Keyboard", "A", "Every control is operable from the keyboard, including the ones the gallery itself adds."),
+    ("2.1.2", "No Keyboard Trap", "A", "Focus can always leave a widget; a modal dialog returns it to the trigger."),
+    ("2.1.4", "Character Key Shortcuts", "A", "Single-key shortcuts are off by default, scoped to a focused widget, or remappable."),
+    ("2.2.1", "Timing Adjustable", "A", "Toast timeouts are generous, pausable, and never the only route to information."),
+    ("2.2.2", "Pause, Stop, Hide", "A", "Nothing auto-advances; motion is disabled under prefers-reduced-motion."),
+    ("2.3.1", "Three Flashes", "A", "No flashing content anywhere, including spinners and skeletons."),
+    ("2.4.1", "Bypass Blocks", "A", "Every page has a skip link to a focusable main region."),
+    ("2.4.2", "Page Titled", "A", "Every page has a unique, descriptive title."),
+    ("2.4.3", "Focus Order", "A", "Focus order follows the visual order, in both directions."),
+    ("2.4.4", "Link Purpose (In Context)", "A", "Link text is meaningful in context; no 'click here' and no bare URLs."),
+    ("2.5.1", "Pointer Gestures", "A", "No multi-point or path gesture is required for anything."),
+    ("2.5.2", "Pointer Cancellation", "A", "Actions fire on the up-event and can be cancelled by moving away."),
+    ("2.5.3", "Label in Name", "A", "The visible label is contained in the accessible name of every control."),
+    ("2.5.4", "Motion Actuation", "A", "Nothing requires device motion or user gesture to operate."),
+    ("3.1.1", "Language of Page", "A", "html lang comes from the request, on every page."),
+    ("3.2.1", "On Focus", "A", "Focus never triggers a context change."),
+    ("3.2.2", "On Input", "A", "Input never triggers a context change without warning first."),
+    ("3.3.1", "Error Identification", "A", "Errors are described in text and linked to the field they belong to."),
+    ("3.3.2", "Labels or Instructions", "A", "Every control has a label or instructions; placeholders are never a label."),
+    ("4.1.2", "Name, Role, Value", "A", "Every custom widget exposes name, role and state, and the state stays in sync."),
+    ("1.2.4", "Captions (Live)", "AA", "Documented as not applicable with a reason, so a reviewer does not have to guess."),
+    ("1.2.5", "Audio Description (Prerecorded)", "AA", "The same statement as 1.2.3, with the AA expectation spelled out."),
+    ("1.3.4", "Orientation", "AA", "Nothing locks orientation; both orientations are usable at 320px."),
+    ("1.3.5", "Identify Input Purpose", "AA", "Autocomplete tokens on every field that collects information about the user."),
+    ("1.4.3", "Contrast (Minimum)", "AA", "The token audit: 4.5:1 for text, 3:1 for large text, measured per pair per theme."),
+    ("1.4.4", "Resize Text", "AA", "Text scales to 200% without loss of content or function."),
+    ("1.4.5", "Images of Text", "AA", "No text is baked into an image or an icon."),
+    ("1.4.10", "Reflow", "AA", "Every page works at 320px without horizontal scrolling."),
+    ("1.4.11", "Non-text Contrast", "AA", "Control boundaries and focus rings reach 3:1 against their surroundings."),
+    ("1.4.12", "Text Spacing", "AA", "Line height, letter spacing and word spacing overrides do not clip content."),
+    ("1.4.13", "Content on Hover or Focus", "AA", "Tooltips are dismissible, hoverable and persistent."),
+    ("2.4.5", "Multiple Ways", "AA", "The gallery can be navigated by link list, by navigation and by search."),
+    ("2.4.6", "Headings and Labels", "AA", "Headings and labels describe the topic or purpose, at a consistent level."),
+    ("2.4.7", "Focus Visible", "AA", "One visible ring, on every interactive element, in both themes."),
+    ("3.1.2", "Language of Parts", "AA", "lang is set on strings in another language, including the language switcher itself."),
+    ("3.2.3", "Consistent Navigation", "AA", "Navigation is in the same place and order on every page."),
+    ("3.2.4", "Consistent Identification", "AA", "The same icon means the same thing and carries the same name everywhere."),
+    ("3.3.3", "Error Suggestion", "AA", "Errors suggest a correction, they do not only report a failure."),
+    ("3.3.4", "Error Prevention (Legal, Financial, Data)", "AA", "Destructive and irreversible actions confirm, and the confirmation is reversible where possible."),
+    ("4.1.3", "Status Messages", "AA", "Status is announced without moving focus: loading, saved, count, error."),
+    ("2.5.7", "Dragging Movements", "AA", "Every drag interaction has a pointer-free equivalent (2.2 addition)."),
+    ("2.5.8", "Target Size (Minimum)", "AA", "Every pointer target is at least 24 by 24 CSS pixels, 44 for the primary controls (2.2 addition)."),
+    ("3.2.6", "Consistent Help", "A", "Help and support are reachable from the same place on every page (2.2 addition)."),
+    ("3.3.7", "Redundant Entry", "A", "Information already entered is not asked for again in the same process (2.2 addition)."),
+    ("3.3.8", "Accessible Authentication (Minimum)", "AA", "No cognitive function test; paste is allowed in every credential field (2.2 addition)."),
+]
+
+BROWSERS_AT = [
+    ("Safari macOS: dialog focus return", "Escape closes the dialog and focus returns to the trigger, in the same order as Chromium."),
+    ("Safari macOS: focus-visible after mouse clicks", "The ring does not appear for pointer users, and always for keyboard users."),
+    ("Safari iOS: modal dialog and the on-screen keyboard", "The dialog stays inside the visual viewport when a field at the bottom is focused."),
+    ("Firefox: forced-colors focus ring", "The 3px ring survives forced-colors, and control boundaries stay visible."),
+    ("Firefox: aria-describedby inside a fieldset", "Field-level descriptions are announced with the right child on focus."),
+    ("Chrome: scrollable code blocks", "Regression guard for the focusable code block: overflow is reachable, axe stays quiet."),
+    ("Chrome Android: tap targets", "Every target meets 44px at 320px wide, measured in the browser, not in the stylesheet."),
+    ("Edge Windows: high contrast", "Every component keeps its boundaries and states in forced-colors mode."),
+    ("Samsung Internet: focus-visible fallback", "A working fallback where :focus-visible is missing, without a double ring where it exists."),
+    ("Safari iOS: 200% text zoom", "Tabs, dialogs and form rows do not clip or overlap at 200% zoom."),
+    ("NVDA + Firefox: tab panel announcement", "The panel is announced after the arrow key, with its label and role."),
+    ("NVDA + Chrome: aria-busy on loading buttons", "The busy state is announced once, and the name does not change."),
+    ("JAWS + Chrome: dialog title and trap", "The title is read on open, and Tab never leaves the dialog."),
+    ("JAWS + Edge: description list reading order", "Term and definition pairs are read as pairs."),
+    ("VoiceOver macOS + Safari: visually hidden text", "Names provided by hidden text are computed, including on icon buttons."),
+    ("VoiceOver iOS + Safari: indeterminate checkbox", "The mixed state is announced as mixed, not as checked."),
+    ("TalkBack + Chrome Android: tab list", "The tab list is entered as one control, with the selected tab announced."),
+    ("Narrator + Edge: error summary", "The summary is announced on submit, and each link announces its field."),
+    ("Orca + Firefox on Linux: live regions", "Polite and assertive announcements both arrive."),
+    ("Voice control and switch access: name matching", "Every control can be activated by saying its visible label."),
+]
+
+INTEGRATIONS = [
+    ("Axum", "axum handlers returning Maud markup through IntoResponse"),
+    ("Rocket", "Rocket responders and a fairing that serves the two assets"),
+    ("Poem", "Poem endpoints, including the static assets"),
+    ("Warp", "warp filters for pages and assets"),
+    ("Leptos", "rendering the components inside a Leptos server function"),
+    ("Dioxus", "fullstack rendering with the components as leaf nodes"),
+    ("Askama", "using Markup inside an Askama template without double escaping"),
+    ("htmx", "partial rendering and swap targets for tabs and dialogs"),
+    ("Alpine.js", "coexistence rules with the enhancement script"),
+    ("Hotwire/Turbo", "turbo frames plus dialog behaviour that survives a swap"),
+    ("Static export", "rendering the whole gallery to HTML for GitHub Pages"),
+    ("Tauri", "serving the components from a local Actix instance"),
+]
+
+DOCS_EXTRA = [
+    ("Cookbook: an Arabic form with server-side validation", "A complete example: RTL fields, a mixed-direction email, and an error summary after a failed submit."),
+    ("Cookbook: a settings page with inline edit", "Rows that become fields, saving without a page reload, and focus that comes back where it was."),
+    ("Cookbook: a checkout flow with an error summary", "The form pattern that survives a screen reader and a keyboard, start to finish."),
+    ("Cookbook: a data table with sorting and pagination", "aria-sort, scoped headers, links for pages, and no JavaScript required."),
+    ("Cookbook: an upload flow with a keyboard fallback", "Drag and drop plus the path that does not need a pointer."),
+    ("Guide: theming for a brand without breaking the audit", "Which tokens are public, how to override them, and how to keep the contrast tests meaningful."),
+    ("Guide: using ui-storm outside Actix", "What the components need from a host, and what the host must provide."),
+    ("Reference: every CSS class the library emits", "Generated from the components so it cannot fall behind."),
+    ("Reference: every custom property", "Generated from the stylesheet, with the theme each value belongs to."),
+    ("Reference: the public API index", "Generated from rustdoc, with links to each component page."),
+    ("Concept: how the accessible name is computed here", "Why hidden text beats aria-label, and where the name comes from for each component."),
+    ("Concept: live regions and when not to use them", "One region, polite by default, and the reason a toast is not an alert."),
+    ("Concept: focus order and the one-tab-stop rule", "Composite widgets, roving tabindex, and what Tab means inside them."),
+    ("Concept: what the enhancement script may and may not do", "The rule from ADR 0003, with examples of both sides."),
+    ("Playbook: accessibility review before a release", "The checklist a reviewer actually runs, in order, with the commands."),
+    ("Playbook: triaging an accessibility report", "How to reproduce, classify, fix and test a barrier report."),
+    ("Playbook: writing an issue a contributor can finish", "Acceptance criteria that can be checked, and a definition of done that is not 'it works'."),
+    ("Migration: from a Radix-style mental model", "Primitives, composition and state ownership, translated to props structs and HTML."),
+    ("Migration: from Bootstrap components", "Where the markup differs, and what Bootstrap did that we deliberately do not."),
+    ("Migration: from an in-house component folder", "Auditing an existing folder and mapping it onto the seven aspects."),
+    ("Tutorial: build a settings page end to end", "From an Actix handler to a validated, accessible page, in one sitting."),
+    ("Tutorial: build an accessible filter panel", "Checkboxes, groups, an applied-filter summary and a clear-all action."),
+    ("Docs: versioned documentation", "Every released minor version keeps its own gallery, built from its own tag."),
+    ("Docs: translate the gallery itself into Arabic", "The documentation an Arabic-first team deserves, not just the components."),
+]
+
+OPS_EXTRA = [
+    ("gallery", "Serve assets with content hashes and immutable caching", "Rename the asset URLs by content hash so they can be cached forever."),
+    ("gallery", "Request ids in every response and error page", "One id per request, logged and shown on the error page so a user can quote it."),
+    ("gallery", "Rate limit the form endpoints", "A documented middleware configuration and a test that a burst is rejected."),
+    ("gallery", "CSP with a nonce for the one inline style", "No unsafe-inline: move the noscript style to a nonce or an asset and keep the policy strict."),
+    ("gallery", "Brotli compression for HTML and CSS", "Enable compression and record the payload improvement."),
+    ("gallery", "A version endpoint with the build commit", "So a running deployment can be identified without reading logs."),
+    ("gallery", "Cache rendered documentation for thirty seconds", "Short-lived server-side caching that survives a deploy without serving stale HTML for long."),
+    ("gallery", "A panic handler that renders an accessible 500 page", "Same shell, same skip link, no stack trace."),
+    ("gallery", "Structured logs with a request id", "Method, path, status, duration, id, and nothing sensitive."),
+    ("gallery", "Graceful shutdown on SIGTERM", "In-flight requests finish; the health endpoint reports draining."),
+    ("release", "Publish to crates.io behind a dry-run gate", "One command, rehearsed with --dry-run first, then published from a tag."),
+    ("release", "Generate the changelog from conventional commits", "The changelog stops depending on memory."),
+    ("release", "An MSRV job on 1.82", "The declared minimum is built on every pull request."),
+    ("release", "Signed releases and provenance", "Tags signed, artifacts attributable to a commit and a workflow."),
+    ("release", "Document the supported Rust versions", "MSRV, stable and beta, and what 'supported' means for each."),
+    ("release", "Deprecation policy enforced by a lint", "Renamed builders warn for one minor version before they disappear."),
+    ("performance", "Payload report per page in CI", "CSS and JS bytes for every route, recorded and compared."),
+    ("performance", "One benchmark suite for all components", "A single criterion binary so the numbers are comparable."),
+    ("performance", "Allocation-count test", "A counting allocator proves the render path does not allocate per attribute."),
+    ("performance", "First-byte timing per route", "Server render cost tracked, with a regression threshold."),
+    ("security", "Write the threat model down", "Assets, actors, trust boundaries and the mitigations the library claims."),
+    ("security", "CSRF token flow for Actix consumers", "A tested example, not a paragraph."),
+    ("security", "Automated dependency updates", "A bot, a policy, and a review checklist for a major bump."),
+    ("testing", "Mutation testing on the components crate", "Prove the tests fail when the markup changes, not just that they pass."),
+    ("testing", "A coverage floor measured by one tool", "Per crate, in CI, with the number in the pull request."),
+    ("testing", "Property tests for markup invariants", "Random props, deterministic invariants: ids unique, names present, attributes balanced."),
+    ("testing", "CI matrix: stable, beta, MSRV", "Warnings from the next release appear before they break a release."),
+    ("testing", "Snapshot the rendered gallery pages", "A byte-level diff for every page, reviewed when it changes."),
+    ("testing", "A nightly full browser matrix", "Chromium, Firefox and WebKit on a schedule, with the axe runs repeated."),
+]
+
+
 def labels_for(area: str, extra: list[str]) -> list[str]:
     seen: list[str] = []
     for label in [f"area: {area}", *extra]:
@@ -533,7 +925,7 @@ def labels_for(area: str, extra: list[str]) -> list[str]:
 
 def component_issues() -> list[dict]:
     issues = []
-    for component in COMPONENTS:
+    for component in COMPONENTS + NEW_COMPONENTS:
         for key, title_tail, criteria in ASPECTS:
             format_args = {
                 "slug": component["slug"],
@@ -684,8 +1076,323 @@ def platform_issues() -> list[dict]:
     return issues
 
 
+DOD = [
+    "- `cargo clippy --workspace --all-targets -- --deny warnings` and `cargo test --workspace` pass.",
+    "- Documented on the gallery page for the component or area it belongs to.",
+]
+
+FOOTER = "_Part of the Rust/Actix rewrite; see `docs/adr/0002-rust-rewrite.md`._"
+
+
+def _issue(key: str, title: str, milestone: str, labels: list[str], body: list[str]) -> dict:
+    return {
+        "key": key,
+        "title": title,
+        "milestone": milestone,
+        "labels": labels,
+        "body": "\n".join([*body, "", FOOTER]),
+    }
+
+
+def extra_aspect_issues() -> list[dict]:
+    """The three aspects every component owes: cost, localisation, example."""
+    issues = []
+    for component in COMPONENTS + NEW_COMPONENTS + SHIPPED:
+        for key, milestone, area, tail, criteria in EXTRA_ASPECTS:
+            placeholders = {"slug": component["slug"], "name": component["name"]}
+            body = [f"## {component['name']}: {tail}", ""]
+            if component.get("element"):
+                body.append(f"- Element: `{component['element']}`")
+            body += ["", "### Acceptance criteria", ""]
+            body += [f"- {line.format(**placeholders)}" for line in criteria]
+            body += ["", "### Definition of done", "", *DOD]
+            issues.append(_issue(
+                key=f"{component['slug']}--{key}",
+                title=f"{component['name']}: {tail}",
+                milestone=milestone,
+                labels=labels_for(area, ["type: enhancement", "a11y"]),
+                body=body,
+            ))
+    return issues
+
+
+def locale_issues() -> list[dict]:
+    """A dossier per right-to-left locale we claim to support."""
+    issues = []
+    for tag, name, note in LOCALES:
+        issues.append(_issue(
+            key=f"locale--{tag}--type",
+            title=f"{name} ({tag}): typography, line height and diacritics",
+            milestone="direction",
+            labels=labels_for("i18n", ["type: enhancement", "rtl", "a11y"]),
+            body=[
+                f"## {name} (`{tag}`)",
+                "",
+                f"What makes {name} different: {note}.",
+                "",
+                "### Acceptance criteria",
+                "",
+                "- The font stack renders this script with no missing glyphs on a clean system.",
+                "- Line height is audited against the tallest diacritic, not against Latin x-height.",
+                "- The gallery renders in this locale and every component survives it.",
+                "- A native reader reviews the result and their name goes in the conformance dossier.",
+                "- A Playwright snapshot pins the result so a later font change is visible in review.",
+                "",
+                "### Definition of done",
+                "",
+                *DOD,
+            ],
+        ))
+        issues.append(_issue(
+            key=f"locale--{tag}--numbers",
+            title=f"{name} ({tag}): numerals, punctuation and bidi defaults",
+            milestone="direction",
+            labels=labels_for("i18n", ["type: enhancement", "rtl"]),
+            body=[
+                f"## {name} (`{tag}`) values",
+                "",
+                f"Text is only half of it: {note}.",
+                "",
+                "### Acceptance criteria",
+                "",
+                "- The digit policy for this locale is stated in `docs/direction.md` and applied by formatting, never by layout.",
+                "- Its punctuation (commas, semicolons, question marks) renders in the expected position.",
+                "- Latin-script brand names and product codes inside the sentence are isolated and do not reorder.",
+                "- Numbers, dates and currency are formatted by the caller and only rendered here.",
+                "- A test asserts the rendered order of a mixed Arabic/number string.",
+                "",
+                "### Definition of done",
+                "",
+                *DOD,
+            ],
+        ))
+
+    for title, detail in LOCALE_SHARED:
+        issues.append(_issue(
+            key="locale--shared--" + title.lower().replace(" ", "-")[:40],
+            title=f"RTL shared: {title}",
+            milestone="direction",
+            labels=labels_for("i18n", ["type: enhancement", "rtl", "a11y"]),
+            body=[
+                f"## {title}",
+                "",
+                detail,
+                "",
+                "### Acceptance criteria",
+                "",
+                "- One mechanism, applied everywhere, documented in `docs/direction.md`.",
+                "- Covered by a test that would fail if a component opted out.",
+                "- Checked against at least three locales with different scripts.",
+                "",
+                "### Definition of done",
+                "",
+                *DOD,
+            ],
+        ))
+    return issues
+
+
+def wcag_issues() -> list[dict]:
+    """One conformance entry per WCAG 2.2 A/AA success criterion."""
+    issues = []
+    for identifier, name, level, detail in WCAG:
+        issues.append(_issue(
+            key=f"wcag--{identifier.replace('.', '-')}",
+            title=f"WCAG {identifier} {name} ({level}): conformance entry",
+            milestone="conformance",
+            labels=labels_for("conformance", ["type: docs", "a11y"]),
+            body=[
+                f"## {identifier} {name} — level {level}",
+                "",
+                detail,
+                "",
+                "### The entry must contain",
+                "",
+                "- **Applicability**: what in this library the criterion touches, or a stated reason it does not apply.",
+                "- **Evidence**: the test, audit or source file that carries the guarantee, linked rather than described.",
+                "- **Manual procedure**: the steps a reviewer follows, naming the assistive technology and browser.",
+                "- **Gaps**: anything known to fail today, with the issue that tracks it.",
+                "",
+                "### Acceptance criteria",
+                "",
+                f"- `docs/conformance/{identifier.replace('.', '-')}.md` exists and follows the template.",
+                "- Linked from the accessibility statement and from the relevant component pages.",
+                "- Reviewed and signed off with a date and a name.",
+                "",
+                "### Definition of done",
+                "",
+                *DOD,
+            ],
+        ))
+    return issues
+
+
+def browser_issues() -> list[dict]:
+    """The browser and assistive-technology matrix."""
+    issues = []
+    for index, (title, detail) in enumerate(BROWSERS_AT, start=1):
+        issues.append(_issue(
+            key=f"matrix--{index:02d}",
+            title=f"Matrix: {title}",
+            milestone="testing",
+            labels=labels_for("testing", ["type: test", "a11y"]),
+            body=[
+                f"## {title}",
+                "",
+                detail,
+                "",
+                "### Acceptance criteria",
+                "",
+                "- The behaviour is verified once by hand, and the result recorded with a date and a version.",
+                "- It is automated in `tests/e2e/` where the platform allows it; where it does not, the manual step is written down.",
+                "- A regression guard exists for the part that can be asserted in any engine.",
+                "- Any divergence between engines is documented on the component page under Known limits.",
+                "",
+                "### Definition of done",
+                "",
+                *DOD,
+            ],
+        ))
+    return issues
+
+
+def integration_issues() -> list[dict]:
+    """Each framework gets an example, an adapter note and a documentation page."""
+    issues = []
+    for name, note in INTEGRATIONS:
+        slug = name.lower().replace(".", "").replace("/", "-").replace(" ", "-")
+        issues.append(_issue(
+            key=f"integration--{slug}--example",
+            title=f"{name}: runnable integration example",
+            milestone="integrations",
+            labels=labels_for("integrations", ["type: feature"]),
+            body=[
+                f"## {name}",
+                "",
+                f"Target: {note}.",
+                "",
+                "### Acceptance criteria",
+                "",
+                "- `examples/integrations/{slug}/` builds and runs with one command and no undocumented setup.",
+                f"- It renders at least four components, in both writing directions.",
+                "- It is added to the CI example-build step so it cannot rot.",
+                "",
+                "### Definition of done",
+                "",
+                *DOD,
+            ],
+        ))
+        issues.append(_issue(
+            key=f"integration--{slug}--adapter",
+            title=f"{name}: adapter surface and tests",
+            milestone="integrations",
+            labels=labels_for("integrations", ["type: feature", "type: test"]),
+            body=[
+                f"## {name} integration surface",
+                "",
+                f"Target: {note}.",
+                "",
+                "### Acceptance criteria",
+                "",
+                "- The minimum adapter (a responder, a filter or a function) is documented and tested.",
+                "- The two assets are served through the framework's own static mechanism.",
+                "- An HTTP test asserts a page renders with the right content type and both assets answer.",
+                "- Nothing in `ui-storm` itself gains a dependency on this framework.",
+                "",
+                "### Definition of done",
+                "",
+                *DOD,
+            ],
+        ))
+        issues.append(_issue(
+            key=f"integration--{slug}--docs",
+            title=f"{name}: documentation page",
+            milestone="integrations",
+            labels=labels_for("integrations", ["type: docs"]),
+            body=[
+                f"## {name}",
+                "",
+                f"Target: {note}.",
+                "",
+                "### Acceptance criteria",
+                "",
+                "- A page in the gallery explains the integration in full, with the code of the example.",
+                "- It states what the framework must provide and what the library assumes.",
+                "- It links to the example and to the relevant component pages.",
+                "",
+                "### Definition of done",
+                "",
+                *DOD,
+            ],
+        ))
+    return issues
+
+
+def docs_extra_issues() -> list[dict]:
+    issues = []
+    for index, (title, detail) in enumerate(DOCS_EXTRA, start=1):
+        issues.append(_issue(
+            key=f"docs--{index:03d}",
+            title=title,
+            milestone="docs",
+            labels=labels_for("docs", ["type: docs"]),
+            body=[
+                "## Context",
+                "",
+                detail,
+                "",
+                "### Acceptance criteria",
+                "",
+                *[f"- {line}" for line in MILESTONE_CRITERIA["docs"]],
+                "- Reachable from the documentation index and from the component pages it mentions.",
+                "",
+                "### Definition of done",
+                "",
+                *DOD,
+            ],
+        ))
+    return issues
+
+
+def ops_extra_issues() -> list[dict]:
+    issues = []
+    for index, (milestone, title, detail) in enumerate(OPS_EXTRA, start=1):
+        criteria = MILESTONE_CRITERIA.get(milestone, DEFAULT_CRITERIA)
+        issues.append(_issue(
+            key=f"ops--{index:03d}",
+            title=title,
+            milestone=milestone,
+            labels=labels_for(milestone, ["type: enhancement", "priority: p2"]),
+            body=[
+                "## Context",
+                "",
+                detail,
+                "",
+                "### Acceptance criteria",
+                "",
+                *[f"- {line}" for line in criteria],
+                "",
+                "### Definition of done",
+                "",
+                *DOD,
+            ],
+        ))
+    return issues
+
+
 def build() -> list[dict]:
-    issues = component_issues() + hardening_issues() + platform_issues()
+    issues = (
+        component_issues()
+        + extra_aspect_issues()
+        + hardening_issues()
+        + platform_issues()
+        + locale_issues()
+        + wcag_issues()
+        + browser_issues()
+        + integration_issues()
+        + docs_extra_issues()
+        + ops_extra_issues()
+    )
     keys = [issue["key"] for issue in issues]
     assert len(keys) == len(set(keys)), "duplicate backlog keys"
     titles = [issue["title"] for issue in issues]
