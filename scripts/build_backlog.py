@@ -1479,11 +1479,26 @@ def publish(issues: list[dict], dry_run: bool, limit: int | None) -> int:
             print(f"[dry-run] {issue['title']}")
         return 0
 
-    existing = subprocess.run(
-        ["gh", "issue", "list", "--limit", "1000", "--state", "all", "--json", "title"],
-        capture_output=True, text=True, check=True,
-    )
-    known = {item["title"] for item in json.loads(existing.stdout or "[]")}
+    # Paginate through the API rather than `gh issue list --limit N`: the list
+    # command truncates at 1000, and a truncated set of known titles would make
+    # this function happily create duplicates.
+    known: set[str] = set()
+    page = 1
+    while True:
+        listing = subprocess.run(
+            ["gh", "api", "--paginate",
+             f"repos/{{owner}}/{{repo}}/issues?state=all&per_page=100&page={page}",
+             "--jq", ".[] | select(.pull_request == null) | .title"],
+            capture_output=True, text=True, check=True,
+        )
+        titles = [line for line in listing.stdout.splitlines() if line.strip()]
+        if not titles:
+            break
+        known.update(titles)
+        page += 1
+        if page > 60:  # 6,000 issues: far beyond anything this project will reach
+            break
+
     created = 0
 
     for issue in issues:
@@ -1495,11 +1510,21 @@ def publish(issues: list[dict], dry_run: bool, limit: int | None) -> int:
             ["gh", "issue", "create", "--title", issue["title"], "--body", issue["body"]],
             capture_output=True, text=True,
         )
-        if result.returncode != 0:
-            print(f"failed: {issue['title']}\n{result.stderr}", file=sys.stderr)
+        # GitHub answers a content-creation flood with 403 "secondary rate limit".
+        # `gh` sometimes exits 0 and prints nothing in that case, so a missing URL
+        # is treated as a failure: a silent no-op is worse than a stopped run.
+        if result.returncode != 0 or "http" not in (result.stdout or ""):
+            message = (result.stderr or result.stdout or "").strip()
+            print(f"stopped after {created} issues: {issue['title']}\n{message}", file=sys.stderr)
+            if "secondary rate limit" in message or "abuse" in message:
+                print(
+                    "GitHub is throttling content creation. Wait for the block to lift and run\n"
+                    "`python3 scripts/build_backlog.py --publish` again; it resumes where it stopped.",
+                    file=sys.stderr,
+                )
             return 1
         created += 1
-        print(f"created: {issue['title']}")
+        print(f"created: {issue['title']} -> {result.stdout.strip()}")
 
     print(f"{created} issues created, {len(known)} already present")
     return 0
