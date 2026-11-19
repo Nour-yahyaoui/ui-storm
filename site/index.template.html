@@ -10,7 +10,6 @@
 <link rel="icon" href="data:,">
 <style>
   :root {
-    --logo: url("data:image/jpeg;base64,__LOGO_BASE64__");
     --bg: #f7f7f5;
     --surface: #ffffff;
     --sunken: #f1f1ee;
@@ -31,6 +30,9 @@
     --sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     --arabic: "Noto Naskh Arabic", "Noto Sans Arabic", "Amiri", "Scheherazade New", "Geeza Pro", "Segoe UI", sans-serif;
+    /* Both panes use this, and neither gets to pick a prettier Arabic face for
+       itself: the demo has to differ in direction, not in weight. */
+    --mixed: "IBM Plex Sans", "IBM Plex Sans Arabic", "Noto Naskh Arabic", "Noto Sans Arabic", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
     --measure: 68ch;
   }
   @media (prefers-color-scheme: dark) {
@@ -116,11 +118,6 @@
     min-height: 64px; flex-wrap: wrap;
   }
   .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-weight: 600; letter-spacing: -0.01em; }
-  .brand-mark {
-    width: 28px; height: 28px; border-radius: var(--radius-2);
-    background: var(--sunken) var(--logo) center / cover no-repeat;
-    border: 1px solid var(--line);
-  }
   .brand small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); letter-spacing: 0; }
   .site-nav { margin-inline-start: auto; display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
   .site-nav a {
@@ -190,8 +187,8 @@
   .pane h3::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
   .pane[data-tone="bad"] h3::before { background: #b4232c; }
   .pane[data-tone="good"] h3::before { background: var(--ok); }
-  .out { font-size: 18px; line-height: 1.85; min-height: 3.6em; }
-  .out bdi { font-family: var(--arabic); }
+  .out { font-size: 18px; line-height: 1.85; min-height: 3.6em; font-family: var(--mixed); }
+  .pane-note { margin: 12px 0 0; font-size: 13px; color: var(--muted); }
   .run-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 14px; }
   .run {
     font-family: var(--mono); font-size: 11px; padding: 4px 7px; border-radius: var(--radius-1);
@@ -267,11 +264,6 @@
   .rtl-article[lang="ar"] { font-family: var(--arabic); font-size: 1.12rem; }
   .lat-in-ar { font-family: var(--sans); font-size: 0.95em; }
 
-  /* founder */
-  .founder { display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center; }
-  @media (max-width: 700px) { .founder { grid-template-columns: 1fr; } }
-  .ga-logo { width: 96px; height: 96px; border-radius: var(--radius-4); border: 1px solid var(--line); display: block; }
-
   footer { border-top: 1px solid var(--line); padding: 40px 0 56px; }
   .footer-grid { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
   .footer-links { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14.5px; }
@@ -286,7 +278,7 @@
   .ga-link:hover { border-color: var(--accent); }
   .ga-link .ga-mark {
     width: 44px; height: 44px; border-radius: var(--radius-3); display: block;
-    background: var(--sunken) var(--logo) center / cover no-repeat;
+    object-fit: cover; flex: none;
   }
   .ga-link small { display: block; font-weight: 400; font-size: 12.5px; color: var(--muted); }
   .fine { color: var(--muted); font-size: 13.5px; margin-top: 26px; max-width: 72ch; }
@@ -302,14 +294,12 @@
 <header class="site-header">
   <div class="wrap">
     <a class="brand" href="#top">
-      <span class="brand-mark" aria-hidden="true"></span>
       <span>ui-storm<small>right-to-left first</small></span>
     </a>
     <nav class="site-nav" aria-label="Sections">
       <a href="#problem">The problem</a>
       <a href="#stack">The stack</a>
       <a href="#static">Static script</a>
-      <a href="#founder">Founder</a>
       <a class="gh" href="https://github.com/Nour-yahyaoui/ui-storm" rel="noopener">GitHub ↗</a>
     </nav>
   </div>
@@ -356,6 +346,11 @@
             <div class="out" id="demo-fixed"></div>
           </div>
         </div>
+
+        <p class="pane-note">
+          Same text, same size, same typeface, same paragraph direction on both sides. The only difference is
+          which characters bidi-kit placed where.
+        </p>
 
         <div class="run-chips" id="demo-runs" aria-label="Runs found by bidi-kit"></div>
 
@@ -544,39 +539,13 @@ import { paragraph } from "https://cdn.jsdelivr.net/npm/bidi-kit@0.1.0/dist/esm/
     </div>
   </section>
 
-  <section id="founder" aria-labelledby="founder-title">
-    <div class="wrap">
-      <h2 id="founder-title">Who is behind it</h2>
-      <div class="card" style="margin-top: 8px">
-        <div class="founder">
-          <span class="ga-mark ga-logo" aria-hidden="true"></span>
-          <div>
-            <h3 style="margin-bottom: 6px">Nour Yahyaoui</h3>
-            <p>
-              Founder of the <strong>Golden Army</strong> and builder of <strong>ui-storm</strong>. ui-storm and
-              bidi-kit come out of the same conviction: right-to-left is not a translation step you add at the
-              end, it is a decision made once in the structure — the locale decides the page direction, the
-              text decides its own runs, and the stylesheet never mentions <em>left</em> or <em>right</em>.
-            </p>
-            <p style="margin-top: 12px">
-              <a href="https://github.com/Nour-yahyaoui" rel="noopener">GitHub profile ↗</a>
-              &nbsp;·&nbsp;
-              <a href="https://github.com/the-golden-army" rel="noopener">Golden Army ↗</a>
-              &nbsp;·&nbsp;
-              <a href="https://github.com/Nour-yahyaoui/ui-storm" rel="noopener">ui-storm ↗</a>
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 </main>
 
 <footer>
   <div class="wrap">
     <div class="footer-grid">
       <a class="ga-link" href="https://github.com/the-golden-army" rel="noopener">
-        <span class="ga-mark" aria-hidden="true"></span>
+        <img class="ga-mark" src="data:image/jpeg;base64,__LOGO_BASE64__" alt="" width="44" height="43" decoding="async">
         <span>Built with the Golden Army<small>github.com/the-golden-army</small></span>
       </a>
       <nav class="footer-links" aria-label="Project links">
@@ -674,8 +643,7 @@ import { paragraph } from "https://cdn.jsdelivr.net/npm/bidi-kit@0.1.0/dist/esm/
         return {
           text: run.text,
           dir: run.dir,
-          lang: run.dir === "rtl" ? "ar" : undefined,
-          font: run.dir === "rtl" ? kit.FONT_STACKS.arabic : undefined
+          lang: run.dir === "rtl" ? "ar" : undefined
         };
       }),
       { dir: sample.base }
@@ -746,13 +714,11 @@ import { paragraph } from "https://cdn.jsdelivr.net/npm/bidi-kit@0.1.0/dist/esm/
   theme();
 
   (function favicon() {
-    try {
-      var value = getComputedStyle(document.documentElement).getPropertyValue("--logo").trim();
-      var match = /url\((['"]?)(data:[^'")]+)\1\)/.exec(value);
-      if (!match) return;
-      var link = document.querySelector('link[rel="icon"]');
-      if (link) link.href = match[2];
-    } catch (error) {}
+    // The mark is embedded once, as the image in the footer. The tab icon is the
+    // same bytes rather than a second copy of them.
+    var link = document.querySelector('link[rel="icon"]');
+    var mark = document.querySelector(".ga-mark");
+    if (link && mark && mark.src) link.href = mark.src;
   })();
 
   // Try the CDN first — that is the deployment this page is documenting — and fall
