@@ -19,6 +19,7 @@ const REQUIRED = [
   "dist/esm/index.d.ts",
   "dist/cjs/index.js",
   "dist/cjs/package.json",
+  "dist/bidi-kit.global.js",
   "bin/bidi-kit.mjs",
   "README.md",
   "LICENSE",

@@ -50,11 +50,15 @@
     "typecheck": "tsc -p tsconfig.esm.json --noEmit",
     "test": "npm run build && node --test tests/*.test.mjs",
     "demo": "node scripts/serve.mjs",
-    "prepublishOnly": "npm test",
+    "prepublishOnly": "npm test && node scripts/sync-static.mjs --check",
     "test:only": "node --test tests/*.test.mjs",
-    "pack:check": "npm run build && node scripts/check-tarball.mjs"
+    "pack:check": "npm run build && node scripts/check-tarball.mjs",
+    "static:sync": "npm run build && node scripts/sync-static.mjs",
+    "static:check": "npm run build && node scripts/sync-static.mjs --check"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
-  }
+  },
+  "unpkg": "./dist/bidi-kit.global.js",
+  "jsdelivr": "./dist/bidi-kit.global.js"
 }

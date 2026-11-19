@@ -13,8 +13,9 @@ const html = paragraph(
 // <p dir="ltr" lang="en">The greeting is <bdi dir="rtl" lang="ar">مرحبا</bdi>.</p>
 ```
 
-Zero dependencies. No fonts bundled. TypeScript types, ESM and CommonJS. Runs in the browser,
-in Node, in an edge worker; nothing in `dist` imports `node:`.
+Zero dependencies. No fonts bundled. TypeScript types, ESM, CommonJS **and a single-file classic
+script for plain HTML pages**. Runs in the browser, in Node, in an edge worker; nothing in `dist`
+imports `node:`.
 
 ## What it fixes
 
@@ -34,6 +35,79 @@ npm install bidi-kit
 ```
 
 Node 18 or newer for the CLI; the library itself has no engine requirement beyond ES2022.
+
+## Use it without a build step
+
+Three ways, depending on what your HTML file already is.
+
+**1. A classic `<script>` tag** — no modules, no bundler, and it works when the page is opened by
+double-clicking it:
+
+```html
+<script src="./bidi-kit/dist/bidi-kit.global.js"></script>
+<script>
+  const kit = window.bidiKit;
+  document.querySelector("#line").innerHTML = kit.paragraph([
+    "Sent to ",
+    { text: "أحمد بن علي", dir: "rtl", lang: "ar" },
+    " this morning.",
+  ]);
+</script>
+```
+
+`dist/bidi-kit.global.js` is 23 kB, sets `window.bidiKit`, and carries the same 31 exports as the
+module build — `tests/global.test.mjs` runs both and compares their output string for string. This is
+the file to copy into a static folder, a CMS "custom HTML" box, or a Jekyll/Hugo/WordPress template.
+
+**2. `<script type="module">`** — the ES module build, no bundler, served over HTTP:
+
+```html
+<script type="module">
+  import { paragraph, CSS, FONT_STACKS } from "./bidi-kit/dist/esm/index.js";
+
+  const style = document.createElement("style");
+  style.textContent = CSS;
+  document.head.append(style);
+</script>
+```
+
+Modules will not load from `file://`, so this needs any static server (`python3 -m http.server`,
+`npx serve`, your framework's dev server).
+
+**3. Straight from this repository, through a CDN** — no npm account, no publish, works today:
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/Nour-yahyaoui/ui-storm@main/static/bidi-kit.js"></script>
+```
+
+`static/bidi-kit.js` is the committed copy of the bundle (`npm run static:sync` writes it; CI fails when
+it drifts from the build). Pin `@main` to a tag or a commit hash for a URL that never changes.
+
+Use the CDN, not `raw.githubusercontent.com`: raw GitHub answers with `text/plain` and `nosniff`, and
+browsers refuse to execute a script served that way. A CDN in front of the same repository sends a
+JavaScript content type, which is the entire difference.
+
+**4. From the npm CDN** — nothing to install, once the package is published:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/bidi-kit@0.1.0/dist/bidi-kit.global.js"></script>
+
+<script type="module">
+  import { paragraph } from "https://cdn.jsdelivr.net/npm/bidi-kit@0.1.0/dist/esm/index.js";
+</script>
+```
+
+The `unpkg` and `jsdelivr` fields in `package.json` point at the global build, so
+`https://unpkg.com/bidi-kit` resolves to it directly.
+
+**Whichever you choose**, two lines are still yours to write: put `lang` on `<html>`, and let user
+text set its own direction with `dir="auto"` (or `kit.apply(element, text)`). Everything else is in
+the package.
+
+There is a worked example of the first option:
+[`demo/plain.html`](demo/plain.html) — one script tag, no modules, no build. The project landing page
+at [`site/index.html`](../../site/index.html) is a second one, and it loads the script from the
+repository-backed CDN described above, with a local fallback.
 
 ## The four things you will actually call
 
@@ -265,11 +339,12 @@ npm run pack:check
 what `npm publish` would upload — both module formats, the declarations, the CLI, the README and the
 licence in; the sources and dependencies out.
 
-44 tests covering run boundaries, punctuation at every kind of edge, phone numbers, URLs, emails,
+48 tests covering run boundaries, punctuation at every kind of edge, phone numbers, URLs, emails,
 hashtags, guillemets, combining marks, base direction, isolates, control-character stripping, the
 HTML builders, the font and CSS tokens, the audit rules, ESM/CJS parity, the absence of `node:`
-imports in the browser build, and the demo server (page, both builds, and refusal to serve a path
-outside the package). CI runs the same suite on Windows.
+imports in the browser build, the single-file browser bundle (loaded as a browser would, and as a
+CommonJS file, then compared against the module build), the demo server, and refusal to serve a path
+outside the package. CI runs the same suite on Windows.
 
 ## Windows
 

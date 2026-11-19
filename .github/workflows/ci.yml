@@ -126,6 +126,12 @@ jobs:
         working-directory: packages/bidi-kit
         run: npm run pack:check
 
+      # `static/bidi-kit.js` is what a static page loads from the CDN in front of
+      # GitHub. It is committed, so it can silently drift from the build.
+      - name: The committed CDN copy matches the build
+        working-directory: packages/bidi-kit
+        run: node scripts/sync-static.mjs --check
+
       - name: The demo and the module build are served
         working-directory: packages/bidi-kit
         run: |
@@ -138,6 +144,8 @@ jobs:
           curl -fsS http://127.0.0.1:4173/ | grep -q "bidi-kit"
           curl -fsS http://127.0.0.1:4173/dist/esm/index.js | grep -q "export {"
           curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4173/dist/cjs/index.js | grep -q 200
+          curl -fsS http://127.0.0.1:4173/dist/bidi-kit.global.js | grep -q "root.bidiKit = factory()"
+          curl -fsS http://127.0.0.1:4173/demo/plain.html | grep -q "bidi-kit.global.js"
 
       - name: The CLI answers on stdin
         working-directory: packages/bidi-kit

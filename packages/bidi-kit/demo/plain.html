@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bidi-kit — plain HTML, no modules, no bundler</title>
+<!--
+  This page is the point: one <script src> and nothing else.
+  No import, no build step, no dev server — open the file directly and it works.
+-->
+<script src="../dist/bidi-kit.global.js"></script>
+<style>
+  :root { --ink: #16181d; --muted: #5c6270; --line: #e3e6ec; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 24px 80px; background: #f7f8fa; color: var(--ink);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  h1 code { background: #eef1f7; padding: 2px 7px; border-radius: 7px; }
+  .lede { color: var(--muted); margin: 0 0 28px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+  .out { font-size: 19px; line-height: 1.95; min-height: 2.4em; }
+  .out bdi { font-family: var(--arabic-stack); }
+  textarea {
+    width: 100%; min-height: 96px; padding: 12px; border: 1px solid var(--line); border-radius: 10px;
+    font: inherit; font-size: 17px; line-height: 1.8; resize: vertical;
+  }
+  button {
+    margin-top: 10px; font: inherit; font-size: 14px; padding: 8px 14px; border-radius: 8px;
+    border: 1px solid var(--line); background: #fff; cursor: pointer;
+  }
+  button:hover { border-color: #c3cad6; }
+  .runs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; font: 12px/1 ui-monospace, Menlo, monospace; }
+  .run { padding: 5px 8px; border-radius: 6px; border: 1px solid var(--line); background: #fff; }
+  .run[data-dir="rtl"] { background: #eaf6ef; border-color: #bfe3cf; }
+  .run[data-dir="ltr"] { background: #eef2fd; border-color: #c9d5f6; }
+  footer { max-width: 760px; margin: 24px auto 0; color: var(--muted); font-size: 13.5px; }
+  code { background: #eef1f7; padding: 1px 5px; border-radius: 5px; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1><code>bidi-kit</code> in a plain HTML file</h1>
+  <p class="lede">
+    One classic <code>&lt;script src&gt;</code>. No modules, no bundler, no server — this page also
+    works when you double-click it.
+  </p>
+
+  <div class="card">
+    <h2>English sentence, Arabic name</h2>
+    <div class="out" id="one"></div>
+  </div>
+
+  <div class="card">
+    <h2>Arabic paragraph, French quotation</h2>
+    <div class="out" id="two"></div>
+  </div>
+
+  <div class="card">
+    <h2>Numbers and an email inside Arabic</h2>
+    <div class="out" id="three"></div>
+  </div>
+
+  <div class="card">
+    <h2>Your text</h2>
+    <textarea id="input" spellcheck="false">Le nom « أحمد بن علي » est écrit en deux alphabets, le 14/11 à 14:30.</textarea>
+    <button id="go">Render it</button>
+    <div class="out" id="four"></div>
+    <div class="runs" id="runs"></div>
+  </div>
+</main>
+
+<footer id="footer"></footer>
+
+<script>
+  // Everything below is the package, loaded as a global.
+  var kit = window.bidiKit;
+
+  // The stylesheet the package exports, applied once.
+  var style = document.createElement("style");
+  style.textContent = kit.CSS;
+  document.head.appendChild(style);
+  document.documentElement.style.setProperty("--arabic-stack", kit.FONT_STACKS.arabic);
+
+  function render(element, text) {
+    var runs = kit.segments(text);
+    element.dir = kit.resolveDirection(text);
+    element.innerHTML = kit.paragraph(
+      runs.map(function (run) {
+        return {
+          text: run.text,
+          dir: run.dir,
+          lang: run.dir === "rtl" ? "ar" : undefined,
+          font: run.dir === "rtl" ? kit.FONT_STACKS.arabic : undefined,
+        };
+      }),
+    );
+    return runs;
+  }
+
+  function chips(element, runs) {
+    element.textContent = "";
+    runs.forEach(function (run) {
+      var chip = document.createElement("span");
+      chip.className = "run";
+      chip.dataset.dir = run.dir;
+      chip.textContent = (run.text === " " ? "␠" : run.text) + " · " + run.dir;
+      element.appendChild(chip);
+    });
+  }
+
+  render(document.getElementById("one"), "Thanks — I forwarded the file to أحمد بن علي yesterday.");
+  render(document.getElementById("two"), "قال المدير: « Bonjour à tous, bienvenue à Tunis. » ثم غادر القاعة.");
+  render(document.getElementById("three"), "الهاتف: +216 71 123 456، البريد: contact@exemple.tn والخصم 15% فقط.");
+
+  var input = document.getElementById("input");
+  var four = document.getElementById("four");
+  var runs = document.getElementById("runs");
+  var update = function () {
+    chips(runs, render(four, input.value));
+  };
+  document.getElementById("go").addEventListener("click", update);
+  input.addEventListener("input", update);
+  update();
+
+  document.getElementById("footer").textContent =
+    "bidi-kit " + Object.keys(kit).length + " exports, loaded from dist/bidi-kit.global.js — " +
+    Math.round(JSON.stringify(kit.CSS).length / 1024 * 10) / 10 + " kB of CSS included.";
+</script>
+</body>
+</html>
