@@ -147,7 +147,11 @@ scripts/build_backlog.py   Backlog generator (also publishes)
 
 ## Backlog
 
-`docs/backlog.md` is the readable index; `backlog/issues.json` is canonical. Both are generated:
+`docs/backlog.md` is the readable index; `backlog/issues.json` is canonical. Both are generated.
+907 issues across 15 milestones: 30 planned components and 6 shipped ones, each with seven build
+aspects plus a cost, localisation and example aspect; a locale dossier for the fourteen right-to-left
+scripts; one entry per WCAG 2.2 A and AA success criterion; a browser and assistive-technology
+matrix; framework integrations; guides; and the operational work the gallery still needs.
 
 ```bash
 python3 scripts/build_backlog.py           # regenerate
