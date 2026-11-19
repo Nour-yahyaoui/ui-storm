@@ -27,6 +27,7 @@ somebody gets the boundaries right. That is the whole job.
 | Which face has the glyphs? | `FONT_STACKS`, `fontStack(locale)`, `fontFace()`, `ARABIC_FEATURES` |
 | What CSS stops it recurring? | `CSS`, `ROOT_CSS` |
 | Is this content safe to render? | `stripBidiControls()`, `audit()` |
+| Can I use it from a plain HTML file? | `<script src="dist/bidi-kit.global.js">` → `window.bidiKit`, no modules and no bundler |
 
 It does not implement the bidi algorithm, shape Arabic, or ship fonts. Those belong to the browser or
 to the consumer's licence decision.

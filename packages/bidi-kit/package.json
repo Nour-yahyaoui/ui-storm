@@ -56,5 +56,7 @@
   },
   "devDependencies": {
     "typescript": "^5.9.3"
-  }
+  },
+  "unpkg": "./dist/bidi-kit.global.js",
+  "jsdelivr": "./dist/bidi-kit.global.js"
 }

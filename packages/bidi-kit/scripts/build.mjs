@@ -23,6 +23,13 @@ rmSync(join(root, "dist"), { recursive: true, force: true });
 run("tsconfig.esm.json");
 run("tsconfig.cjs.json");
 
+// The single-file browser build: one classic script, no modules, no bundler in
+// the consumer's project. Runs after the ESM output it reads.
+execFileSync(process.execPath, [join(root, "scripts", "build-global.mjs")], {
+  cwd: root,
+  stdio: "inherit",
+});
+
 // The package is ESM-first, so the CommonJS output needs its own scope.
 mkdirSync(join(root, "dist", "cjs"), { recursive: true });
 writeFileSync(

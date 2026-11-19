@@ -28,6 +28,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   type declarations; verified in CI and by `npm test`. See `docs/bidi-kit.md` and
   `docs/adr/0004-bidi-kit-npm-package.md`.
 
+- `bidi-kit` ships a single-file browser build, `dist/bidi-kit.global.js`: one classic `<script src>`
+  that sets `window.bidiKit`, for pages with no bundler, no module loader and no server. It is
+  generated from `dist/esm` by `scripts/build-global.mjs` (dependency order, no re-indentation, a
+  hard error on duplicate top-level names) and held to the module build's behaviour by
+  `tests/global.test.mjs`. `unpkg` and `jsdelivr` fields point at it, and `demo/plain.html` is a
+  worked example that also works from `file://`.
+
 ### Fixed
 
 - `bidi-kit` builds and tests on Windows. The build now runs

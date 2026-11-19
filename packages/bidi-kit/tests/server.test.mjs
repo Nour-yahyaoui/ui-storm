@@ -60,6 +60,14 @@ test("the demo serves the page and the builds, and refuses to leave the package"
   assert.match(await esm.text(), /export \{/);
 
   assert.equal((await get(port, "/dist/cjs/index.js")).status, 200);
+
+  // The classic-script build and the page that uses it with no module system.
+  const global = await get(port, "/dist/bidi-kit.global.js");
+  assert.equal(global.status, 200);
+  assert.match(await global.text(), /root\.bidiKit = factory\(\)/);
+  const plain = await get(port, "/demo/plain.html");
+  assert.equal(plain.status, 200);
+  assert.match(await plain.text(), /bidi-kit\.global\.js/);
   assert.equal((await get(port, "/nope.html")).status, 404);
 
   // `..` segments are collapsed by the URL parser, so these stay inside the
