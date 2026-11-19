@@ -21,6 +21,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 - Test suites: markup contracts per component, HTTP contracts per page, Playwright axe runs across
   two themes and two directions, keyboard and no-JavaScript runs.
 - Generated backlog of 332 issues across 13 milestones (`scripts/build_backlog.py`, `docs/backlog.md`).
+- `bidi-kit` (`packages/bidi-kit`) — an npm package for mixed-direction text: run segmentation,
+  direction detection, `<bdi>`/isolate helpers, HTML paragraph building, Arabic font stacks and
+  `@font-face` rules, logical-CSS tokens, bidi control-character stripping, an `audit` lint, a CLI,
+  and a demo page with naive-versus-fixed comparisons. Zero runtime dependencies; ESM, CommonJS and
+  type declarations; verified in CI and by `npm test`. See `docs/bidi-kit.md` and
+  `docs/adr/0004-bidi-kit-npm-package.md`.
 
 ### Changed
 

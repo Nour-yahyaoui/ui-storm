@@ -139,6 +139,7 @@ crates/ui-storm/           The library: components, direction, tokens, assets
   assets/ui-storm.js       Progressive enhancement, dependency-free
   tests/components.rs      Markup contracts
 crates/ui-storm-web/       The gallery: routes, layout, pages
+packages/bidi-kit/         npm package: Arabic in English, French in Arabic, no bidi glitches
 tests/e2e/                 Playwright: axe, keyboard, RTL, no-JavaScript
 backlog/issues.json        Generated backlog, 332 issues across 13 milestones
 docs/                      Guides, accessibility statement, ADRs, backlog index
@@ -168,6 +169,7 @@ superseded by this backlog, and the decision to rebuild is recorded in
 - [getting started](docs/getting-started.md)
 - [accessibility statement](docs/accessibility.md)
 - [direction and internationalisation](docs/direction.md)
+- [inline direction and the `bidi-kit` package](docs/bidi-kit.md)
 - [architecture decisions](docs/adr/)
 - [contributing](CONTRIBUTING.md)
 
