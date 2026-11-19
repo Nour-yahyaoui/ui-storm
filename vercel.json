@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": null,
+  "installCommand": "exit 0",
+  "outputDirectory": "site",
+  "headers": [
+    {
+      "source": "/bidi-kit.js",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=600, must-revalidate" }]
+    }
+  ]
+}

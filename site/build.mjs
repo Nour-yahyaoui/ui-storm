@@ -18,7 +18,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");
 
 const template = readFileSync(join(here, "index.template.html"), "utf8");
-const logo = readFileSync(join(here, "golden-army.png")).toString("base64");
+const logo = readFileSync(join(here, "golden-army.jpg")).toString("base64");
 const script = readFileSync(join(root, "packages", "bidi-kit", "static", "bidi-kit.js"), "utf8");
 
 if (template.includes("__KIT_SCRIPT__")) {
