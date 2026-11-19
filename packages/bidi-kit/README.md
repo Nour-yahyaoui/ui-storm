@@ -178,11 +178,20 @@ proof.
 ## CLI
 
 ```bash
-npx bidi-kit check src/**/*.html      # exit 1 when a bidi control character is found
-npx bidi-kit runs note.txt            # print each run and its direction
-echo "مرحبا، هذا نص." | npx bidi-kit isolate
+npx bidi-kit check page.html     # exits 1 when a bidi control character is found
+npx bidi-kit runs note.txt       # prints each run and its direction
+npx bidi-kit isolate note.txt
 npx bidi-kit dir article.txt
 ```
+
+With no file, every command reads standard input:
+
+```bash
+printf 'مرحبا، هذا نص.' | npx bidi-kit dir
+```
+
+None of these examples carry trailing comments, deliberately: `cmd.exe` on Windows would pass the
+`#` and the words after it to the command as arguments.
 
 ## Why not just `dir="rtl"`?
 
@@ -233,8 +242,11 @@ and touches nothing else.
 ## Demo
 
 ```bash
-npm run build && npm run demo   # http://localhost:4173
+npm run build
+npm run demo
 ```
+
+The demo is served on <http://localhost:4173>. `npm run demo` builds first if `dist` is missing.
 
 The demo page shows five side-by-side comparisons — naive `textContent` versus bidi-kit — for an
 English sentence ending in Arabic, an Arabic paragraph quoting French, numbers and an email in
@@ -244,13 +256,33 @@ playground that runs the real library on your own text and prints the runs it fo
 ## Tests
 
 ```bash
-npm test   # builds ESM + CJS, then runs node --test
+npm ci
+npm test
+npm run pack:check
 ```
 
-41 tests covering run boundaries, punctuation at every kind of edge, phone numbers, URLs, emails,
+`npm test` builds ESM and CJS, then runs `node --test`. `npm run pack:check` builds and then asserts
+what `npm publish` would upload — both module formats, the declarations, the CLI, the README and the
+licence in; the sources and dependencies out.
+
+44 tests covering run boundaries, punctuation at every kind of edge, phone numbers, URLs, emails,
 hashtags, guillemets, combining marks, base direction, isolates, control-character stripping, the
-HTML builders, the font and CSS tokens, the audit rules, ESM/CJS parity, and the absence of
-`node:` imports in the browser build.
+HTML builders, the font and CSS tokens, the audit rules, ESM/CJS parity, the absence of `node:`
+imports in the browser build, and the demo server (page, both builds, and refusal to serve a path
+outside the package). CI runs the same suite on Windows.
+
+## Windows
+
+Everything here runs on Windows, and CI proves it on every push (the `bidi-kit on Windows` job):
+
+- the build invokes `node_modules/typescript/bin/tsc` with the current Node binary, never the
+  `.bin/tsc` shim, which is a `.cmd` file on Windows and cannot be spawned directly;
+- test discovery passes a glob to `node --test`, which expands it itself, so it does not depend on
+  the shell;
+- `npm run pack:check` is a script, not a shell one-liner.
+
+One thing to watch: `cmd.exe` has no inline comments. `npm publish  # ready` sends `#` and `ready` to
+npm as a tag, and npm will refuse. Copy the commands without the annotations.
 
 ## Licence
 

@@ -28,6 +28,15 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   type declarations; verified in CI and by `npm test`. See `docs/bidi-kit.md` and
   `docs/adr/0004-bidi-kit-npm-package.md`.
 
+### Fixed
+
+- `bidi-kit` builds and tests on Windows. The build now runs
+  `node_modules/typescript/bin/tsc` with the current Node binary instead of the `.bin/tsc` shim,
+  which is a `.cmd` file on Windows and cannot be spawned without a shell; test discovery hands the
+  glob to `node --test` rather than relying on the shell to expand it; and `npm run pack:check`
+  replaces the shell one-liner that verified the tarball. A `bidi-kit on Windows` CI job now runs
+  the suite on `windows-latest`.
+
 ### Changed
 
 - The project is rebuilt in Rust. The React/TypeScript implementation, Storybook, Vite, Vitest and

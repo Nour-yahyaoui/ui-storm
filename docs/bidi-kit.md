@@ -36,13 +36,20 @@ to the consumer's licence decision.
 ```bash
 cd packages/bidi-kit
 npm ci
-npm test          # builds ESM + CJS, then node --test
-npm run demo      # http://localhost:4173
+npm test
+npm run demo
+npm run pack:check
 npx bidi-kit check some-page.html
 ```
 
-CI runs the same three steps as the `bidi-kit` job, and verifies that the published tarball contains
-the two builds, the declarations, the CLI, the README and the licence — and no sources.
+`npm test` builds ESM and CJS and then runs `node --test`. `npm run demo` serves the demo page on
+port 4173. `npm run pack:check` builds and then verifies the published tarball: both module formats,
+the declarations, the CLI, the README and the licence present; sources and dependencies absent.
+
+CI runs those steps on Linux in the `bidi-kit` job, and again on `windows-latest` in the
+`bidi-kit on Windows` job — the latter exists because the build once invoked the `.bin/tsc` shim,
+which is a `.cmd` file on Windows and cannot be spawned, and because a shell one-liner in the workflow
+was not portable either.
 
 ## Why it is not part of the Rust crates
 
