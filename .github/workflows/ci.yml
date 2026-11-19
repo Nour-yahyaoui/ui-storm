@@ -124,19 +124,7 @@ jobs:
 
       - name: The published tarball contains what it claims to
         working-directory: packages/bidi-kit
-        run: |
-          set -euo pipefail
-          npm pack --dry-run --json > pack.json
-          node -e '
-            const files = JSON.parse(require("node:fs").readFileSync("pack.json", "utf8"))[0].files.map((f) => f.path);
-            const required = ["dist/esm/index.js", "dist/esm/index.d.ts", "dist/cjs/index.js", "bin/bidi-kit.mjs", "README.md", "LICENSE"];
-            const missing = required.filter((path) => !files.includes(path));
-            if (missing.length) { console.error("missing from the tarball:", missing.join(", ")); process.exit(1); }
-            if (files.some((path) => path.startsWith("src/") || path.startsWith("node_modules/"))) {
-              console.error("tarball contains source or dependencies"); process.exit(1);
-            }
-            console.log(`tarball ok: ${files.length} files`);
-          '
+        run: npm run pack:check
 
       - name: The demo and the module build are served
         working-directory: packages/bidi-kit
@@ -150,6 +138,40 @@ jobs:
           curl -fsS http://127.0.0.1:4173/ | grep -q "bidi-kit"
           curl -fsS http://127.0.0.1:4173/dist/esm/index.js | grep -q "export {"
           curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4173/dist/cjs/index.js | grep -q 200
+
+      - name: The CLI answers on stdin
+        working-directory: packages/bidi-kit
+        run: |
+          set -euo pipefail
+          printf 'Hello \xd9\x85\xd8\xb1\xd8\xad\xd8\xa8\xd8\xa7.' | node bin/bidi-kit.mjs runs | grep -q "^rtl"
+          printf 'text-align: left;' | node bin/bidi-kit.mjs check | grep -q "physical-text-align"
+          test "$(printf '\xd9\x85\xd8\xb1\xd8\xad\xd8\xa8\xd8\xa7' | node bin/bidi-kit.mjs dir)" = "rtl"
+
+  bidi-kit-windows:
+    # The package is published from a developer machine at least as often as from
+    # CI, and those machines are not all Unix. This job exists because `.bin/tsc`
+    # and shell globs behave differently on Windows, and both broke a release.
+    name: bidi-kit on Windows
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: packages/bidi-kit
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Build and test
+        run: npm test
+
+      - name: The published tarball contains what it claims to
+        run: npm run pack:check
 
   gallery:
     name: Gallery smoke test

@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 import * as esm from "../dist/esm/index.js";
 
-const root = new URL("..", import.meta.url).pathname;
+// fileURLToPath, not `.pathname`: a Windows file URL is `/C:/…`, and joining
+// that prefix produces a path that does not exist.
+const root = fileURLToPath(new URL("../", import.meta.url));
 const require = createRequire(import.meta.url);
 
 test("the CommonJS build exposes the same API as the ES module build", () => {
@@ -31,6 +35,21 @@ test("the browser build imports nothing from node", async () => {
     assert.doesNotMatch(source, /(from|require\()\s*["']node:/, file);
     assert.doesNotMatch(source, /process\.(env|argv)/, file);
   }
+});
+
+test("the build runs the compiler script, never the .bin shim", async () => {
+  // `node_modules/.bin/tsc` is a `.cmd` file on Windows and cannot be spawned
+  // without a shell, which is exactly how the first release attempt failed.
+  const build = await readFile(join(root, "scripts", "build.mjs"), "utf8");
+  assert.match(build, /"typescript", "bin", "tsc"/);
+  assert.doesNotMatch(build, /"node_modules", "\.bin"/);
+  assert.match(build, /execFileSync\(process\.execPath/);
+});
+
+test("the tarball check is a script, so it runs in any shell", async () => {
+  const manifest = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+  assert.equal(manifest.scripts["pack:check"], "npm run build && node scripts/check-tarball.mjs");
+  assert.ok(existsSync(join(root, "scripts", "check-tarball.mjs")));
 });
 
 test("declarations ship for both entry points", async () => {
