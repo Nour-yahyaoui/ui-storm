@@ -19,7 +19,7 @@ const root = join(here, "..");
 
 const template = readFileSync(join(here, "index.template.html"), "utf8");
 const logo = readFileSync(join(here, "golden-army.jpg")).toString("base64");
-const script = readFileSync(join(root, "packages", "bidi-kit", "static", "bidi-kit.js"), "utf8");
+const script = readFileSync(join(root, "static", "bidi-kit.js"), "utf8");
 
 if (template.includes("__KIT_SCRIPT__")) {
   throw new Error("the template no longer needs the script inlined; delete this branch");

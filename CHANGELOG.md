@@ -35,7 +35,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   `tests/global.test.mjs`. `unpkg` and `jsdelivr` fields point at it, and `demo/plain.html` is a
   worked example that also works from `file://`.
 
-- `packages/bidi-kit/static/bidi-kit.js` — the committed copy of the single-file build, so a static
+- `static/bidi-kit.js` — the committed copy of the single-file build, so a static
   page can load it from a CDN in front of the repository without npm:
   `https://cdn.jsdelivr.net/gh/Nour-yahyaoui/ui-storm@main/static/bidi-kit.js`. Written by
   `npm run static:sync`, checked in CI and before publishing by `npm run static:check`.
