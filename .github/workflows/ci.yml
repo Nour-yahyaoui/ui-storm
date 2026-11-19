@@ -102,6 +102,55 @@ jobs:
       - name: Regenerate and compare
         run: python3 scripts/build_backlog.py --check
 
+  bidi-kit:
+    name: bidi-kit (npm package)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install
+        working-directory: packages/bidi-kit
+        run: npm ci --no-audit --no-fund
+
+      # Builds both module formats, then runs the unit tests against the build.
+      - name: Typecheck, build and test
+        working-directory: packages/bidi-kit
+        run: npm test
+
+      - name: The published tarball contains what it claims to
+        working-directory: packages/bidi-kit
+        run: |
+          set -euo pipefail
+          npm pack --dry-run --json > pack.json
+          node -e '
+            const files = JSON.parse(require("node:fs").readFileSync("pack.json", "utf8"))[0].files.map((f) => f.path);
+            const required = ["dist/esm/index.js", "dist/esm/index.d.ts", "dist/cjs/index.js", "bin/bidi-kit.mjs", "README.md", "LICENSE"];
+            const missing = required.filter((path) => !files.includes(path));
+            if (missing.length) { console.error("missing from the tarball:", missing.join(", ")); process.exit(1); }
+            if (files.some((path) => path.startsWith("src/") || path.startsWith("node_modules/"))) {
+              console.error("tarball contains source or dependencies"); process.exit(1);
+            }
+            console.log(`tarball ok: ${files.length} files`);
+          '
+
+      - name: The demo and the module build are served
+        working-directory: packages/bidi-kit
+        run: |
+          set -euo pipefail
+          node scripts/serve.mjs &
+          for _ in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4173/ > /dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:4173/ | grep -q "bidi-kit"
+          curl -fsS http://127.0.0.1:4173/dist/esm/index.js | grep -q "export {"
+          curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4173/dist/cjs/index.js | grep -q 200
+
   gallery:
     name: Gallery smoke test
     runs-on: ubuntu-latest

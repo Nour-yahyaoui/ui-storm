@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bidi-kit — Arabic inside English, French inside Arabic</title>
+<style>
+  :root {
+    --ink: #16181d;
+    --muted: #5c6270;
+    --line: #e3e6ec;
+    --bg: #f7f8fa;
+    --card: #ffffff;
+    --bad: #b4232c;
+    --good: #17683f;
+    --accent: #2a5bd7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0 24px 96px;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  header { max-width: 1080px; margin: 0 auto; padding: 56px 0 24px; }
+  h1 { font-size: 40px; line-height: 1.15; margin: 0 0 12px; letter-spacing: -0.02em; }
+  h1 code { background: #eef1f7; padding: 2px 8px; border-radius: 8px; font-size: 32px; }
+  .lede { max-width: 62ch; color: var(--muted); font-size: 18px; margin: 0; }
+  .meta { margin-top: 18px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag {
+    font: 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 6px 10px; border-radius: 999px; background: #eef1f7; color: var(--muted);
+  }
+  main { max-width: 1080px; margin: 0 auto; display: grid; gap: 20px; }
+  section {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px 24px 20px;
+  }
+  h2 { font-size: 19px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .why { color: var(--muted); margin: 0 0 18px; font-size: 15px; max-width: 78ch; }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .compare > .runs { grid-column: 1 / -1; }
+  @media (max-width: 780px) { .compare { grid-template-columns: 1fr; } }
+  .pane { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: #fbfcfe; }
+  .pane h3 {
+    margin: 0 0 10px; font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: 0.08em; text-transform: uppercase; display: flex; align-items: center; gap: 8px;
+  }
+  .pane h3::before { content: ""; width: 8px; height: 8px; border-radius: 50%; }
+  .pane.bad h3 { color: var(--bad); }
+  .pane.bad h3::before { background: var(--bad); }
+  .pane.good h3 { color: var(--good); }
+  .pane.good h3::before { background: var(--good); }
+  .out { font-size: 19px; line-height: 1.9; min-height: 3.4em; }
+  .pane.bad .out { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .out bdi { font-family: var(--arabic); }
+  .runs { margin-top: 14px; display: flex; gap: 6px; flex-wrap: wrap; font: 12px/1 ui-monospace, Menlo, monospace; }
+  .run { padding: 5px 8px; border-radius: 6px; border: 1px solid var(--line); background: #fff; }
+  .run[data-dir="rtl"] { background: #eaf6ef; border-color: #bfe3cf; }
+  .run[data-dir="ltr"] { background: #eef2fd; border-color: #c9d5f6; }
+  .run small { color: var(--muted); }
+  .play { display: grid; grid-template-columns: 260px 1fr; gap: 18px; }
+  @media (max-width: 780px) { .play { grid-template-columns: 1fr; } }
+  textarea {
+    width: 100%; min-height: 150px; resize: vertical; padding: 12px; border-radius: 10px;
+    border: 1px solid var(--line); font: inherit; font-size: 17px; line-height: 1.8;
+  }
+  label.opt { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 14px; color: var(--muted); }
+  select, button {
+    font: inherit; font-size: 14px; padding: 7px 10px; border-radius: 8px;
+    border: 1px solid var(--line); background: #fff; color: var(--ink);
+  }
+  button { cursor: pointer; }
+  button:hover { border-color: #c3cad6; }
+  pre {
+    margin: 12px 0 0; padding: 14px; border-radius: 10px; background: #12141a; color: #e6e8ee;
+    overflow: auto; font: 12.5px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  pre .k { color: #8fb3ff; }
+  pre .s { color: #a8d8b0; }
+  .samples { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  footer { max-width: 1080px; margin: 32px auto 0; color: var(--muted); font-size: 14px; }
+  code.inline { background: #eef1f7; padding: 1px 5px; border-radius: 5px; font-size: 13.5px; }
+</style>
+</head>
+<body>
+<header>
+  <h1><code>bidi-kit</code></h1>
+  <p class="lede">
+    Arabic words inside English sentences, French sentences inside Arabic paragraphs —
+    with the punctuation, numbers and fonts that go with them. No dependencies, no fonts
+    bundled, no framework.
+  </p>
+  <div class="meta">
+    <span class="tag">zero dependencies</span>
+    <span class="tag">ESM + CJS + types</span>
+    <span class="tag">browser safe</span>
+    <span class="tag">MIT</span>
+  </div>
+</header>
+
+<main>
+  <section>
+    <h2>1 · An Arabic word at the end of an English sentence</h2>
+    <p class="why">
+      The full stop is neutral: the browser keeps it with the Arabic run, so it renders on
+      the wrong side of the word and the sentence looks like it starts with a dot.
+      <code class="inline">paragraph()</code> decides the run boundaries, isolates the Arabic
+      run, and leaves the stop in the English sentence.
+    </p>
+    <div class="compare" data-sample="greeting"></div>
+  </section>
+
+  <section>
+    <h2>2 · A French quotation inside an Arabic paragraph</h2>
+    <p class="why">
+      In a right-to-left paragraph the guillemets, the trailing full stop and the Latin words
+      all compete for a direction. Isolating the quotation keeps it readable as French while
+      the paragraph around it stays Arabic.
+    </p>
+    <div class="compare" data-sample="quotation"></div>
+  </section>
+
+  <section>
+    <h2>3 · Numbers, a phone number and an email in Arabic</h2>
+    <p class="why">
+      Digits inside Arabic run left to right; a <code class="inline">+</code> or a
+      <code class="inline">%</code> that belongs to a number has to travel with it. Left alone,
+      the number's parts get reordered around the neighbouring Arabic words.
+    </p>
+    <div class="compare" data-sample="numbers"></div>
+  </section>
+
+  <section>
+    <h2>4 · A French paragraph with an Arabic name</h2>
+    <p class="why">
+      This is the quieter failure: nothing looks scrambled, but the name is rendered in
+      whatever face the operating system fell back to, the quotes jump sides, and the comma
+      after the name is not the French one. A face with Arabic glyphs and an isolated run
+      fix all three.
+    </p>
+    <div class="compare" data-sample="french"></div>
+  </section>
+
+  <section>
+    <h2>5 · Diacritics, and the face that has room for them</h2>
+    <p class="why">
+      A naskh text face at a Latin line-height clips the marks. Both panes use the same
+      string; only the right one is in a font stack chosen for Arabic, at a line-height
+      that leaves the kasra below the baseline somewhere to live.
+    </p>
+    <div class="compare" data-sample="diacritics"></div>
+  </section>
+
+  <section>
+    <h2>6 · Try your own text</h2>
+    <p class="why">
+      Everything below runs on the real library — the same functions the panes above use.
+    </p>
+    <div class="play">
+      <div>
+        <textarea id="input" spellcheck="false">Le directeur a dit: «مرحبا بكم في تونس» ثم غادر. Rendez-vous à 14:30, 250 dinars.</textarea>
+        <label class="opt">Base direction
+          <select id="base">
+            <option value="auto">auto (first strong character)</option>
+            <option value="ltr">ltr</option>
+            <option value="rtl">rtl</option>
+          </select>
+        </label>
+        <label class="opt"><input type="checkbox" id="marks"> show hidden bidi controls</label>
+        <div class="samples">
+          <button data-fill="Le nom « أحمد » est écrit en deux alphabets.">French quote</button>
+          <button data-fill="الهاتف: +216 71 123 456، البريد: contact@exemple.tn">Arabic contact</button>
+          <button data-fill="The invoice total is 1,248.50% of the budget — قال أحمد.">English numbers</button>
+        </div>
+      </div>
+      <div class="compare" id="playground">
+        <div class="pane bad">
+          <h3>plain textContent</h3>
+          <div class="out" id="play-bad"></div>
+        </div>
+        <div class="pane good">
+          <h3>bidi-kit</h3>
+          <div class="out" id="play-good"></div>
+        </div>
+      </div>
+    </div>
+    <div class="runs" id="play-runs"></div>
+  </section>
+
+  <section>
+    <h2>7 · The rules, if you would rather not call anything</h2>
+    <p class="why">
+      <code class="inline">CSS</code> and <code class="inline">ROOT_CSS</code> are exported as
+      strings. Drop them in a stylesheet and most of the above stops happening even in markup
+      that never touches the library.
+    </p>
+    <pre id="css"></pre>
+  </section>
+</main>
+
+<footer>
+  <p>
+    Built with the real package: <code class="inline">$ npm run demo</code> in
+    <code class="inline">packages/bidi-kit</code>. The Arabic face is a system stack
+    (Noto Naskh Arabic, Amiri, Scheherazade New, Geeza Pro) — nothing is downloaded.
+  </p>
+</footer>
+
+<script type="module">
+  import {
+    CSS,
+    FONT_STACKS,
+    segments,
+    detectDirection,
+    resolveDirection,
+    stripBidiControls,
+    hasBidiControls,
+    paragraph,
+  } from "../dist/esm/index.js";
+
+  // The font token from the package, used by both the demo chrome and the panes.
+  document.documentElement.style.setProperty("--arabic", FONT_STACKS.arabic);
+
+  const SAMPLES = {
+    greeting: {
+      lang: "en",
+      parts: ["The greeting is ", { text: "مرحبا", dir: "rtl", lang: "ar" }, "."],
+      note: "trailing full stop",
+    },
+    quotation: {
+      lang: "ar",
+      parts: [
+        { text: "قال المدير:", dir: "rtl", lang: "ar" },
+        " ",
+        { text: "« Bonjour à tous, bienvenue à Tunis. »", dir: "ltr", lang: "fr" },
+        " ",
+        { text: "ثم غادر القاعة.", dir: "rtl", lang: "ar" },
+      ],
+      note: "French quotation in Arabic",
+    },
+    numbers: {
+      lang: "ar",
+      parts: [
+        { text: "الهاتف:", dir: "rtl", lang: "ar" },
+        " ",
+        { text: "+216 71 123 456", dir: "ltr" },
+        { text: " والبريد الإلكتروني", dir: "rtl", lang: "ar" },
+        " ",
+        { text: "contact@exemple.tn", dir: "ltr" },
+        { text: " والخصم 15% فقط.", dir: "rtl", lang: "ar" },
+      ],
+      note: "numbers and email in Arabic",
+    },
+    french: {
+      lang: "fr",
+      parts: [
+        "Merci à ",
+        { text: "أحمد بن علي", dir: "rtl", lang: "ar" },
+        ", qui a relu « le rapport » avant l'envoi.",
+      ],
+      note: "Arabic name in French",
+    },
+    diacritics: {
+      lang: "ar",
+      parts: [{ text: "مُحَمَّدٌ رَسُولُ اللَّهِ، وَعَلِيٌّ وَلِيُّ اللَّهِ.", dir: "rtl", lang: "ar" }],
+      note: "tashkeel",
+    },
+  };
+
+  const plain = (parts) =>
+    parts.map((part) => (typeof part === "string" ? part : part.text)).join("");
+
+  function chip(run) {
+    const span = document.createElement("span");
+    span.className = "run";
+    span.dataset.dir = run.dir;
+    span.textContent = run.text === " " ? "␠" : run.text;
+    const size = document.createElement("small");
+    size.textContent = ` ${run.dir}`;
+    span.append(size);
+    return span;
+  }
+
+  function renderComparison(container, sample) {
+    const text = plain(sample.parts);
+    const base = resolveDirection(
+      sample.parts.map((part) => (typeof part === "string" ? part : part.text)).join(""),
+    );
+
+    const bad = document.createElement("div");
+    bad.className = "pane bad";
+    bad.innerHTML = "<h3>plain textContent</h3>";
+    const badOut = document.createElement("div");
+    badOut.className = "out";
+    badOut.dir = sample.lang === "ar" ? "rtl" : "ltr";
+    badOut.textContent = text;
+    bad.append(badOut);
+
+    const good = document.createElement("div");
+    good.className = "pane good";
+    good.innerHTML = "<h3>bidi-kit</h3>";
+    const goodOut = document.createElement("div");
+    goodOut.className = "out";
+    goodOut.innerHTML = paragraph(
+      sample.parts.map((part) =>
+        typeof part === "string"
+          ? part
+          : { ...part, font: part.dir === "rtl" ? FONT_STACKS.arabic : undefined },
+      ),
+      { lang: sample.lang },
+    );
+    good.append(goodOut);
+
+    const runs = document.createElement("div");
+    runs.className = "runs";
+    runs.append(...segments(text, base).map(chip));
+
+    container.replaceWith(bad, good, runs);
+  }
+
+  for (const host of document.querySelectorAll("[data-sample]")) {
+    renderComparison(host, SAMPLES[host.dataset.sample]);
+  }
+
+  // ---- playground -------------------------------------------------------
+  const input = document.querySelector("#input");
+  const baseSelect = document.querySelector("#base");
+  const marks = document.querySelector("#marks");
+  const playBad = document.querySelector("#play-bad");
+  const playGood = document.querySelector("#play-good");
+  const playRuns = document.querySelector("#play-runs");
+
+  function update() {
+    const raw = input.value;
+    const dangerous = hasBidiControls(raw);
+    const text = marks.checked ? raw : stripBidiControls(raw);
+    const detected = detectDirection(text);
+    const base = baseSelect.value === "auto" ? resolveDirection(text) : baseSelect.value;
+    if (baseSelect.value === "auto") baseSelect.dataset.detected = detected;
+
+    playBad.dir = base;
+    playBad.textContent = text;
+
+    playGood.dir = base;
+    playGood.innerHTML = paragraph(
+      segments(text, base).map((run) => ({
+        text: run.text,
+        dir: run.dir === "neutral" ? "auto" : run.dir,
+        lang: run.dir === "rtl" ? "ar" : undefined,
+        font: run.dir === "rtl" ? FONT_STACKS.arabic : undefined,
+      })),
+      { dir: base },
+    );
+
+    playRuns.replaceChildren(...segments(text, base).map(chip));
+
+    if (dangerous && !marks.checked) {
+      const warning = document.createElement("span");
+      warning.className = "run";
+      warning.dataset.dir = "rtl";
+      warning.textContent = "bidi controls removed";
+      playRuns.append(warning);
+    }
+  }
+
+  input.addEventListener("input", update);
+  baseSelect.addEventListener("change", update);
+  marks.addEventListener("change", update);
+  for (const button of document.querySelectorAll("[data-fill]")) {
+    button.addEventListener("click", () => {
+      input.value = button.dataset.fill;
+      update();
+    });
+  }
+  update();
+
+  document.querySelector("#css").textContent = CSS;
+</script>
+</body>
+</html>
