@@ -74,7 +74,20 @@ the file to copy into a static folder, a CMS "custom HTML" box, or a Jekyll/Hugo
 Modules will not load from `file://`, so this needs any static server (`python3 -m http.server`,
 `npx serve`, your framework's dev server).
 
-**3. From a CDN** — nothing to install, once the package is published:
+**3. Straight from this repository, through a CDN** — no npm account, no publish, works today:
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/Nour-yahyaoui/ui-storm@main/static/bidi-kit.js"></script>
+```
+
+`static/bidi-kit.js` is the committed copy of the bundle (`npm run static:sync` writes it; CI fails when
+it drifts from the build). Pin `@main` to a tag or a commit hash for a URL that never changes.
+
+Use the CDN, not `raw.githubusercontent.com`: raw GitHub answers with `text/plain` and `nosniff`, and
+browsers refuse to execute a script served that way. A CDN in front of the same repository sends a
+JavaScript content type, which is the entire difference.
+
+**4. From the npm CDN** — nothing to install, once the package is published:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/bidi-kit@0.1.0/dist/bidi-kit.global.js"></script>
@@ -92,7 +105,9 @@ text set its own direction with `dir="auto"` (or `kit.apply(element, text)`). Ev
 the package.
 
 There is a worked example of the first option:
-[`demo/plain.html`](demo/plain.html) — one script tag, no modules, no build.
+[`demo/plain.html`](demo/plain.html) — one script tag, no modules, no build. The project landing page
+at [`site/index.html`](../../site/index.html) is a second one, and it loads the script from the
+repository-backed CDN described above, with a local fallback.
 
 ## The four things you will actually call
 

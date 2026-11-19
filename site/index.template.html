@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ui-storm — right-to-left design, and the text to fill it</title>
+<meta name="description" content="ui-storm is a right-to-left-first design system written in Rust, server-rendered with Maud. bidi-kit is the npm package that makes Arabic, English and French sit on the same line in the right order — installable, or one script tag away.">
+<meta name="theme-color" content="#f7f7f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14161a" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --logo: url("data:image/png;base64,__LOGO_BASE64__");
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --sunken: #f1f1ee;
+    --ink: #191c1a;
+    --muted: #5a605c;
+    --accent: #14624f;
+    --accent-ink: #ffffff;
+    --line: #e2e3de;
+    --ok: #14624f;
+    --warn: #8a4b12;
+    --radius-1: 3px;
+    --radius-2: 5px;
+    --radius-3: 8px;
+    --radius-4: 14px;
+    --t-fast: 120ms;
+    --t-med: 200ms;
+    --t-slow: 320ms;
+    --sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --arabic: "Noto Naskh Arabic", "Noto Sans Arabic", "Amiri", "Scheherazade New", "Geeza Pro", "Segoe UI", sans-serif;
+    --measure: 68ch;
+  }
+  @media (prefers-color-scheme: dark) {
+    html[data-theme="auto"] {
+      --bg: #14161a;
+      --surface: #1b1e23;
+      --sunken: #101216;
+      --ink: #e8eae7;
+      --muted: #9aa2a0;
+      --accent: #4fbfa0;
+      --accent-ink: #10161a;
+      --line: #2c313a;
+      --ok: #4fbfa0;
+      --warn: #e0a86a;
+    }
+  }
+  html[data-theme="dark"] {
+    --bg: #14161a;
+    --surface: #1b1e23;
+    --sunken: #101216;
+    --ink: #e8eae7;
+    --muted: #9aa2a0;
+    --accent: #4fbfa0;
+    --accent-ink: #10161a;
+    --line: #2c313a;
+    --ok: #4fbfa0;
+    --warn: #e0a86a;
+  }
+  html[data-theme="light"] {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --sunken: #f1f1ee;
+    --ink: #191c1a;
+    --muted: #5a605c;
+    --accent: #14624f;
+    --accent-ink: #ffffff;
+    --line: #e2e3de;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  :where(a) { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  :where(a:hover) { text-decoration-thickness: 2px; }
+  :where(a, button, input, textarea, select):focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-1);
+  }
+  :where(img) { max-width: 100%; display: block; }
+
+  .skip {
+    position: absolute; left: -9999px; top: 0; z-index: 50;
+    background: var(--accent); color: var(--accent-ink);
+    padding: 12px 16px; border-radius: 0 0 var(--radius-3) 0; font-weight: 600;
+  }
+  .skip:focus { left: 0; }
+
+  .wrap { width: min(1120px, 100% - 2.5rem); margin-inline: auto; }
+
+  /* header */
+  .site-header {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--bg);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  .site-header .wrap {
+    display: flex; align-items: center; gap: 1rem;
+    min-height: 64px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-weight: 600; letter-spacing: -0.01em; }
+  .brand-mark {
+    width: 28px; height: 28px; border-radius: var(--radius-2);
+    background: var(--sunken) var(--logo) center / cover no-repeat;
+    border: 1px solid var(--line);
+  }
+  .brand small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); letter-spacing: 0; }
+  .site-nav { margin-inline-start: auto; display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+  .site-nav a {
+    color: var(--muted); text-decoration: none; font-size: 14.5px; font-weight: 500;
+    padding: 10px 12px; border-radius: var(--radius-2); transition: color var(--t-fast), background var(--t-fast);
+  }
+  .site-nav a:hover { color: var(--ink); background: var(--sunken); }
+  .site-nav a.gh { color: var(--ink); border: 1px solid var(--line); background: var(--surface); }
+
+  /* hero */
+  .hero { padding: 64px 0 40px; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: start; }
+  @media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: 32px; padding-top: 40px; } }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 16px; font-variant-numeric: tabular-nums;
+  }
+  h1 {
+    font-size: clamp(2.1rem, 5vw, 3.4rem); line-height: 1.08; letter-spacing: -0.025em;
+    margin: 0 0 18px; text-wrap: balance; font-weight: 600;
+  }
+  h1 .rtl { font-family: var(--arabic); font-size: 0.92em; line-height: 1.3; }
+  .lede { font-size: 1.15rem; color: var(--muted); max-width: 46ch; margin: 0 0 26px; }
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  .cta-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 44px;
+    padding: 11px 16px; border-radius: var(--radius-3); border: 1px solid transparent;
+    font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none;
+    transition: transform var(--t-fast), background var(--t-fast), border-color var(--t-fast);
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
+  .btn-primary:hover { background: color-mix(in srgb, var(--accent) 86%, black); }
+  .btn-ghost { background: var(--surface); color: var(--ink); border-color: var(--line); }
+  .btn-ghost:hover { border-color: color-mix(in srgb, var(--line) 60%, var(--muted)); }
+  .btn code { font-family: var(--mono); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+
+  .facts { display: flex; gap: 28px; margin-top: 30px; flex-wrap: wrap; }
+  .fact { font-family: var(--mono); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .fact b { display: block; font-size: 20px; color: var(--ink); font-family: var(--sans); font-weight: 600; letter-spacing: -0.01em; }
+
+  /* demo card */
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-4);
+    padding: 20px; box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 4%, transparent);
+  }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .card-head h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0; font-weight: 600; }
+  .chip {
+    font-family: var(--mono); font-size: 11.5px; padding: 5px 9px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--muted); background: var(--sunken);
+    display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums;
+  }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  .chip[data-state="cdn"] .dot { background: var(--ok); }
+  .chip[data-state="local"] .dot { background: var(--warn); }
+  .chip[data-state="none"] .dot { background: #b4232c; }
+
+  .panes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 620px) { .panes { grid-template-columns: 1fr; } }
+  .pane { border: 1px solid var(--line); border-radius: var(--radius-3); padding: 12px 13px; background: var(--bg); }
+  .pane h3 {
+    margin: 0 0 8px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.07em;
+    text-transform: uppercase; display: flex; align-items: center; gap: 7px; color: var(--muted); font-weight: 600;
+  }
+  .pane h3::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  .pane[data-tone="bad"] h3::before { background: #b4232c; }
+  .pane[data-tone="good"] h3::before { background: var(--ok); }
+  .out { font-size: 18px; line-height: 1.85; min-height: 3.6em; }
+  .out bdi { font-family: var(--arabic); }
+  .run-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 14px; }
+  .run {
+    font-family: var(--mono); font-size: 11px; padding: 4px 7px; border-radius: var(--radius-1);
+    border: 1px solid var(--line); background: var(--surface); font-variant-numeric: tabular-nums;
+  }
+  .run[data-dir="rtl"] { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
+  .run small { color: var(--muted); }
+
+  .samples { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
+  .samples button {
+    font: inherit; font-size: 13px; padding: 8px 11px; min-height: 36px;
+    border-radius: 999px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--muted); cursor: pointer; transition: all var(--t-fast);
+  }
+  .samples button:hover { color: var(--ink); border-color: var(--muted); }
+  .samples button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  /* sections */
+  section { padding: 56px 0; border-top: 1px solid var(--line); }
+  section > .wrap > h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem); letter-spacing: -0.02em; margin: 0 0 10px; font-weight: 600; text-wrap: balance;
+  }
+  .section-lede { color: var(--muted); max-width: var(--measure); margin: 0 0 32px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 860px) { .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+
+  .card h3 { margin: 0 0 8px; font-size: 1.05rem; letter-spacing: -0.01em; }
+  .card p { margin: 0; color: var(--muted); font-size: 15.5px; }
+  .card p + p { margin-top: 10px; }
+  .card ul { margin: 10px 0 0; padding-inline-start: 18px; color: var(--muted); font-size: 15px; }
+  .card li { margin: 4px 0; }
+  .card .tag { font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* code blocks */
+  .code {
+    position: relative; background: var(--sunken); border: 1px solid var(--line);
+    border-radius: var(--radius-3); padding: 14px 15px; overflow: auto;
+  }
+  .code pre {
+    margin: 0; font-family: var(--mono); font-size: 13px; line-height: 1.7;
+    color: var(--ink); font-variant-numeric: tabular-nums; tab-size: 2;
+  }
+  .code .c { color: var(--muted); }
+  .copy {
+    position: absolute; inset-block-start: 8px; inset-inline-end: 8px;
+    font: inherit; font-size: 12px; font-weight: 600; padding: 7px 10px; min-height: 32px;
+    border-radius: var(--radius-2); border: 1px solid var(--line);
+    background: var(--surface); color: var(--muted); cursor: pointer;
+  }
+  .copy:hover { color: var(--ink); border-color: var(--muted); }
+  .copy[data-copied="true"] { color: var(--accent); border-color: var(--accent); }
+
+  .static-hero { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 22px; align-items: start; }
+  @media (max-width: 860px) { .static-hero { grid-template-columns: 1fr; } }
+  .note-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .note-list li { padding-inline-start: 30px; position: relative; color: var(--muted); font-size: 15.5px; }
+  .note-list li::before {
+    content: ""; position: absolute; inset-inline-start: 0; inset-block-start: 6px;
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid color-mix(in srgb, var(--accent) 60%, var(--line));
+  }
+  .note-list b { color: var(--ink); }
+  .note-list code { font-family: var(--mono); font-size: 13px; }
+
+  /* rtl block */
+  .rtl-article {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-4); padding: 24px 26px;
+  }
+  .rtl-article h3 { margin: 0 0 4px; font-size: 1.2rem; }
+  .rtl-article p { line-height: 1.95; margin: 0 0 14px; }
+  .rtl-article p:last-child { margin-bottom: 0; }
+  .rtl-article[lang="ar"] { font-family: var(--arabic); font-size: 1.12rem; }
+  .lat-in-ar { font-family: var(--sans); font-size: 0.95em; }
+
+  /* founder */
+  .founder { display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center; }
+  @media (max-width: 700px) { .founder { grid-template-columns: 1fr; } }
+  .ga-logo { width: 96px; height: 96px; border-radius: var(--radius-4); border: 1px solid var(--line); display: block; }
+
+  footer { border-top: 1px solid var(--line); padding: 40px 0 56px; }
+  .footer-grid { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+  .footer-links { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14.5px; }
+  .footer-links a { color: var(--muted); text-decoration: none; }
+  .footer-links a:hover { color: var(--ink); text-decoration: underline; }
+  .ga-link {
+    display: inline-flex; align-items: center; gap: 12px;
+    text-decoration: none; color: var(--ink); font-weight: 600;
+    padding: 10px 14px 10px 10px; border: 1px solid var(--line); border-radius: var(--radius-4);
+    background: var(--surface); transition: border-color var(--t-fast), transform var(--t-fast);
+  }
+  .ga-link:hover { border-color: var(--accent); }
+  .ga-link .ga-mark {
+    width: 44px; height: 44px; border-radius: var(--radius-3); display: block;
+    background: var(--sunken) var(--logo) center / cover no-repeat;
+  }
+  .ga-link small { display: block; font-weight: 400; font-size: 12.5px; color: var(--muted); }
+  .fine { color: var(--muted); font-size: 13.5px; margin-top: 26px; max-width: 72ch; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>ui-storm<small>right-to-left first</small></span>
+    </a>
+    <nav class="site-nav" aria-label="Sections">
+      <a href="#problem">The problem</a>
+      <a href="#stack">The stack</a>
+      <a href="#static">Static script</a>
+      <a href="#founder">Founder</a>
+      <a class="gh" href="https://github.com/Nour-yahyaoui/ui-storm" rel="noopener">GitHub ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap" id="top">
+    <div class="hero">
+      <div>
+        <p class="eyebrow">ui-storm · bidi-kit · v0.1.0</p>
+        <h1>Arabic and English, on the same line, <span class="rtl" lang="ar" dir="rtl">بالترتيب الصحيح</span>.</h1>
+        <p class="lede">
+          <strong>ui-storm</strong> is a right-to-left-first design system written in Rust and rendered on the
+          server with Maud. <strong>bidi-kit</strong> is the npm package that decides where a sentence changes
+          direction — so an Arabic name inside an English sentence keeps the full stop where you put it.
+        </p>
+        <div class="cta-row">
+          <button class="btn btn-primary" type="button" data-copy="npm install bidi-kit">
+            Copy <code>npm install bidi-kit</code>
+          </button>
+          <a class="btn btn-ghost" href="#static">Use it with one script tag</a>
+        </div>
+        <div class="facts">
+          <div class="fact"><b>0</b>runtime dependencies</div>
+          <div class="fact"><b>48</b>tests, Linux &amp; Windows</div>
+          <div class="fact"><b>23 kB</b>single-file build</div>
+          <div class="fact"><b>MIT</b>licence</div>
+        </div>
+      </div>
+
+      <div class="card" aria-labelledby="demo-title">
+        <div class="card-head">
+          <h2 id="demo-title">Live, in this page</h2>
+          <span class="chip" id="kit-status" data-state="loading"><span class="dot"></span><span id="kit-status-text">loading bidi-kit…</span></span>
+        </div>
+
+        <div class="panes">
+          <div class="pane" data-tone="bad">
+            <h3>plain textContent</h3>
+            <div class="out" id="demo-naive"></div>
+          </div>
+          <div class="pane" data-tone="good">
+            <h3>bidi-kit</h3>
+            <div class="out" id="demo-fixed"></div>
+          </div>
+        </div>
+
+        <div class="run-chips" id="demo-runs" aria-label="Runs found by bidi-kit"></div>
+
+        <div class="samples" role="group" aria-label="Example sentences">
+          <button type="button" data-sample="0" aria-pressed="true">English → Arabic</button>
+          <button type="button" data-sample="1" aria-pressed="false">Arabic → French</button>
+          <button type="button" data-sample="2" aria-pressed="false">Numbers</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="problem" aria-labelledby="problem-title">
+    <div class="wrap">
+      <h2 id="problem-title">A paragraph is not one direction</h2>
+      <p class="section-lede">
+        <code dir="ltr">dir="rtl"</code> sets the direction of a block. Everything inside it is then ordered
+        per character by the Unicode bidi algorithm, which is correct in isolation and surprising in bulk,
+        because punctuation and digits are neutral: they take their direction from their neighbours.
+      </p>
+      <div class="grid-3">
+        <article class="card">
+          <span class="tag">Boundary</span>
+          <h3>The full stop moves</h3>
+          <p>
+            In an English sentence, the period after an Arabic name is neutral, so it is absorbed into the
+            Arabic run and renders on the wrong side of the name. Nobody wrote it that way; the algorithm
+            cannot know where you meant the boundary.
+          </p>
+        </article>
+        <article class="card">
+          <span class="tag">Numerals</span>
+          <h3>The phone number breaks</h3>
+          <p>
+            Digits have no direction of their own. Inside Arabic, <span dir="ltr">+216 71 123 456</span> gets
+            sliced into pieces that reassemble in the wrong order — and the <code dir="ltr">+</code> and
+            <code dir="ltr">%</code> that belong to the number travel somewhere else entirely.
+          </p>
+        </article>
+        <article class="card">
+          <span class="tag">Type</span>
+          <h3>The word changes face</h3>
+          <p>
+            If the Latin font has no Arabic glyphs, the browser falls back per glyph and one word is drawn in
+            two faces. A naskh face at a Latin line-height clips the kasra below the baseline.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="stack" aria-labelledby="stack-title">
+    <div class="wrap">
+      <h2 id="stack-title">Two projects, one idea</h2>
+      <p class="section-lede">
+        Direction is decided once, structurally, and then never guessed again. ui-storm does that for the page;
+        bidi-kit does it for the sentence.
+      </p>
+      <div class="grid-2">
+        <article class="card">
+          <span class="tag">Rust · server-rendered</span>
+          <h3>ui-storm</h3>
+          <p>
+            A component library where direction is resolved from the locale, not from a class name: a BCP-47 tag
+            becomes a <code dir="ltr">Direction</code>, the layout writes it to <code dir="ltr">&lt;html dir&gt;</code>,
+            and the stylesheet uses logical properties only.
+          </p>
+          <ul>
+            <li>Maud components with props structs and a pure <code dir="ltr">render()</code></li>
+            <li>Actix Web gallery serving the components and their documentation</li>
+            <li>Contrast maths asserted against the shipped stylesheet</li>
+            <li>Playwright and axe across two themes, two directions, keyboard and no-JavaScript</li>
+            <li>A generated backlog of 907 issues across 15 milestones</li>
+          </ul>
+        </article>
+        <article class="card">
+          <span class="tag">TypeScript · npm + CDN</span>
+          <h3>bidi-kit</h3>
+          <p>
+            The inline half. It answers four questions for any string: where does each run start and end, which
+            way does it go, how is it isolated, and which face has the glyphs.
+          </p>
+          <ul>
+            <li><code dir="ltr">segments()</code> — run boundaries, with UTF-16 offsets</li>
+            <li><code dir="ltr">paragraph()</code>, <code dir="ltr">bdi()</code>, <code dir="ltr">isolate()</code> — isolation, never the deprecated embeddings</li>
+            <li>Arabic font stacks, joining features and <code dir="ltr">@font-face</code> rules</li>
+            <li><code dir="ltr">audit()</code> and <code dir="ltr">stripBidiControls()</code> — invisible characters as a security problem</li>
+            <li>CLI: <code dir="ltr">bidi-kit check</code>, <code dir="ltr">runs</code>, <code dir="ltr">isolate</code>, <code dir="ltr">dir</code></li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="static" aria-labelledby="static-title">
+    <div class="wrap">
+      <h2 id="static-title">Use it from a static page, with one tag</h2>
+      <p class="section-lede">
+        No npm, no bundler, no build step, no module loader. The file is served from the repository through a
+        CDN, so a browser caches it exactly like any other JavaScript file, and a plain <code dir="ltr">.html</code>
+        opened from disk loads it too.
+      </p>
+
+      <div class="static-hero">
+        <div>
+          <div class="code">
+            <button class="copy" type="button" data-copy-target="cdn-snippet">Copy</button>
+            <pre id="cdn-snippet">&lt;script src="https://cdn.jsdelivr.net/gh/Nour-yahyaoui/ui-storm@main/static/bidi-kit.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  const kit = window.bidiKit; <span class="c">// 31 exports, no globals beyond this one</span>
+  document.querySelector("#line").innerHTML = kit.paragraph([
+    "Sent to ",
+    { text: "أحمد بن علي", dir: "rtl", lang: "ar" },
+    " this morning.",
+  ]);
+&lt;/script&gt;</pre>
+          </div>
+
+          <div class="code" style="margin-top: 12px">
+            <button class="copy" type="button" data-copy-target="module-snippet">Copy</button>
+            <pre id="module-snippet"><span class="c">// the same package, as a module, straight from npm or the CDN</span>
+import { paragraph, CSS } from "bidi-kit";
+<span class="c">// or, with no install at all:</span>
+import { paragraph } from "https://cdn.jsdelivr.net/npm/bidi-kit@0.1.0/dist/esm/index.js";</pre>
+          </div>
+        </div>
+
+        <div>
+          <ul class="note-list">
+            <li>
+              <b>Why not <code dir="ltr">raw.githubusercontent.com</code>?</b> It answers with
+              <code dir="ltr">text/plain</code> and <code dir="ltr">nosniff</code>, so browsers refuse to execute it
+              as a script. A CDN in front of the same repository sends a JavaScript content type, which is the
+              whole difference.
+            </li>
+            <li>
+              <b>Cached like any script.</b> The CDN keeps one copy in memory and browsers cache it; pin
+              <code dir="ltr">@main</code> to a tag or a commit when you want a version that never changes.
+            </li>
+            <li>
+              <b>The repository is the source of truth.</b> <code dir="ltr">static/bidi-kit.js</code> is generated
+              from the package build, and CI fails when the committed copy and a fresh build disagree.
+            </li>
+            <li>
+              <b>It ships its own CSS.</b> <code dir="ltr">kit.CSS</code> is a string: inject it once and the
+              isolation, alignment and Arabic line-height rules are in place.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="bilingual" aria-labelledby="bilingual-title">
+    <div class="wrap">
+      <h2 id="bilingual-title">What this looks like in Arabic</h2>
+      <p class="section-lede">
+        This paragraph is Arabic with a French quotation inside it, and the quotation is isolated so it reads as
+        French. Below it, the same sentence with English and a phone number, which stay left to right.
+      </p>
+      <div class="grid-2">
+        <article class="rtl-article" lang="ar" dir="rtl">
+          <h3>مقتطف من التقرير</h3>
+          <p>
+            قال المدير: <span class="lat-in-ar" lang="fr" dir="ltr">« Bonjour à tous, bienvenue à Tunis. »</span>
+            ثم غادر القاعة قبل نهاية الاجتماع.
+          </p>
+          <p>
+            الهاتف: <span class="lat-in-ar" dir="ltr">+216 71 123 456</span>، والبريد الإلكتروني
+            <span class="lat-in-ar" dir="ltr">contact@exemple.tn</span>، والخصم 15% فقط.
+          </p>
+        </article>
+        <article class="card">
+          <span class="tag">How it is decided</span>
+          <h3>Rules, in one place</h3>
+          <ul>
+            <li>A strong character starts a run and decides its direction.</li>
+            <li>Arabic punctuation and Arabic-Indic digits stay inside an Arabic run.</li>
+            <li>Latin digits read left to right even inside Arabic, and keep their <code dir="ltr">. , + - %</code>.</li>
+            <li>Brackets, quotes and symbols are neutral: they take their direction from agreeing neighbours, otherwise the base direction.</li>
+            <li>Combining marks and invisible controls never split a word.</li>
+            <li>Isolation uses <code dir="ltr">&lt;bdi&gt;</code> and <code dir="ltr">U+2066–U+2069</code>, never <code dir="ltr">RLE</code> / <code dir="ltr">PDF</code>.</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="founder" aria-labelledby="founder-title">
+    <div class="wrap">
+      <h2 id="founder-title">Who is behind it</h2>
+      <div class="card" style="margin-top: 8px">
+        <div class="founder">
+          <span class="ga-mark ga-logo" aria-hidden="true"></span>
+          <div>
+            <h3 style="margin-bottom: 6px">Nour Yahyaoui</h3>
+            <p>
+              Founder of the <strong>Golden Army</strong> and builder of <strong>ui-storm</strong>. ui-storm and
+              bidi-kit come out of the same conviction: right-to-left is not a translation step you add at the
+              end, it is a decision made once in the structure — the locale decides the page direction, the
+              text decides its own runs, and the stylesheet never mentions <em>left</em> or <em>right</em>.
+            </p>
+            <p style="margin-top: 12px">
+              <a href="https://github.com/Nour-yahyaoui" rel="noopener">GitHub profile ↗</a>
+              &nbsp;·&nbsp;
+              <a href="https://github.com/the-golden-army" rel="noopener">Golden Army ↗</a>
+              &nbsp;·&nbsp;
+              <a href="https://github.com/Nour-yahyaoui/ui-storm" rel="noopener">ui-storm ↗</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <a class="ga-link" href="https://github.com/the-golden-army" rel="noopener">
+        <span class="ga-mark" aria-hidden="true"></span>
+        <span>Built with the Golden Army<small>github.com/the-golden-army</small></span>
+      </a>
+      <nav class="footer-links" aria-label="Project links">
+        <a href="https://github.com/Nour-yahyaoui/ui-storm" rel="noopener">Repository</a>
+        <a href="https://github.com/Nour-yahyaoui/ui-storm/tree/main/packages/bidi-kit" rel="noopener">bidi-kit source</a>
+        <a href="https://github.com/Nour-yahyaoui/ui-storm/blob/main/packages/bidi-kit/README.md" rel="noopener">README</a>
+        <a href="https://github.com/Nour-yahyaoui/ui-storm/blob/main/LICENSE" rel="noopener">MIT licence</a>
+      </nav>
+    </div>
+    <p class="fine">
+      This page is a static file. It loads bidi-kit from the repository through a CDN, and falls back to a copy
+      served beside it when the CDN is unreachable — the badge above the demo says which one answered.
+      ui-storm and bidi-kit are works in progress; nothing here is presented as finished, and no number on this
+      page is estimated.
+    </p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var CDN = "https://cdn.jsdelivr.net/gh/Nour-yahyaoui/ui-storm@main/static/bidi-kit.js";
+  var LOCAL = "./bidi-kit.js";
+
+  var SAMPLES = [
+    {
+      text: "The greeting is مرحبا.",
+      lang: "en",
+      base: "ltr"
+    },
+    {
+      text: "قال المدير: « Bonjour à tous, bienvenue à Tunis. » ثم غادر القاعة.",
+      lang: "ar",
+      base: "rtl"
+    },
+    {
+      text: "الهاتف: +216 71 123 456، والخصم 15% فقط.",
+      lang: "ar",
+      base: "rtl"
+    }
+  ];
+
+  function setStatus(state, label) {
+    var chip = document.getElementById("kit-status");
+    if (!chip) return;
+    chip.dataset.state = state;
+    document.getElementById("kit-status-text").textContent = label;
+  }
+
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      var tag = document.createElement("script");
+      tag.src = src;
+      tag.onload = resolve;
+      tag.onerror = function () { reject(new Error(src)); };
+      document.head.appendChild(tag);
+    });
+  }
+
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, function (character) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character];
+    });
+  }
+
+  function runs(text, kit, base) {
+    var runsFound = kit.segments(text, base);
+    var host = document.getElementById("demo-runs");
+    host.textContent = "";
+    runsFound.forEach(function (run) {
+      var chip = document.createElement("span");
+      chip.className = "run";
+      chip.dataset.dir = run.dir;
+      chip.textContent = (run.text === " " ? "␠" : run.text) + " ";
+      var small = document.createElement("small");
+      small.textContent = run.dir;
+      chip.appendChild(small);
+      host.appendChild(chip);
+    });
+    return runsFound;
+  }
+
+  function render(kit, index) {
+    var sample = SAMPLES[index];
+    var naive = document.getElementById("demo-naive");
+    var fixed = document.getElementById("demo-fixed");
+
+    naive.dir = sample.base;
+    naive.textContent = sample.text;
+
+    fixed.dir = sample.base;
+    fixed.innerHTML = kit.paragraph(
+      kit.segments(sample.text, sample.base).map(function (run) {
+        return {
+          text: run.text,
+          dir: run.dir,
+          lang: run.dir === "rtl" ? "ar" : undefined,
+          font: run.dir === "rtl" ? kit.FONT_STACKS.arabic : undefined
+        };
+      }),
+      { dir: sample.base }
+    );
+
+    runs(sample.text, kit, sample.base);
+  }
+
+  function wireCopy() {
+    document.querySelectorAll("[data-copy]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        copy(button, button.getAttribute("data-copy"));
+      });
+    });
+    document.querySelectorAll("[data-copy-target]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        var pre = document.getElementById(button.getAttribute("data-copy-target"));
+        copy(button, pre ? pre.textContent : "");
+      });
+    });
+  }
+
+  function copy(button, text) {
+    var done = function () {
+      var original = button.textContent;
+      button.dataset.copied = "true";
+      button.textContent = "Copied";
+      window.setTimeout(function () {
+        button.dataset.copied = "false";
+        button.textContent = original;
+      }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () {});
+    } else {
+      var area = document.createElement("textarea");
+      area.value = text;
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand("copy"); done(); } catch (error) {}
+      document.body.removeChild(area);
+    }
+  }
+
+  function wireSamples(kit) {
+    var buttons = document.querySelectorAll("[data-sample]");
+    buttons.forEach(function (button) {
+      button.addEventListener("click", function () {
+        buttons.forEach(function (other) { other.setAttribute("aria-pressed", "false"); });
+        button.setAttribute("aria-pressed", "true");
+        render(kit, Number(button.getAttribute("data-sample")));
+      });
+    });
+  }
+
+  function theme() {
+    var stored = null;
+    try { stored = window.localStorage.getItem("ui-storm-theme"); } catch (error) {}
+    if (stored === "dark" || stored === "light") document.documentElement.dataset.theme = stored;
+  }
+
+  function start(kit) {
+    wireCopy();
+    wireSamples(kit);
+    render(kit, 0);
+  }
+
+  theme();
+
+  (function favicon() {
+    try {
+      var value = getComputedStyle(document.documentElement).getPropertyValue("--logo").trim();
+      var match = /url\((['"]?)(data:[^'")]+)\1\)/.exec(value);
+      if (!match) return;
+      var link = document.querySelector('link[rel="icon"]');
+      if (link) link.href = match[2];
+    } catch (error) {}
+  })();
+
+  // Try the CDN first — that is the deployment this page is documenting — and fall
+  // back to the copy served next to the page, so the demo never silently dies.
+  (async function () {
+    if (window.bidiKit) {
+      setStatus("cdn", "bidi-kit · already loaded");
+      start(window.bidiKit);
+      return;
+    }
+    try {
+      await loadScript(CDN);
+      if (!window.bidiKit) throw new Error("no global");
+      setStatus("cdn", "bidi-kit · cdn.jsdelivr.net");
+    } catch (error) {
+      try {
+        await loadScript(LOCAL);
+        setStatus("local", "bidi-kit · local copy");
+      } catch (secondError) {
+        setStatus("none", "bidi-kit unavailable");
+        document.getElementById("demo-fixed").textContent = "The script could not be loaded.";
+        return;
+      }
+    }
+    if (window.bidiKit) start(window.bidiKit);
+  })();
+})();
+</script>
+</body>
+</html>
