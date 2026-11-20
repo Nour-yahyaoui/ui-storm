@@ -80,7 +80,7 @@ Modules will not load from `file://`, so this needs any static server (`python3 
 <script src="https://cdn.jsdelivr.net/gh/Nour-yahyaoui/ui-storm@main/static/bidi-kit.js"></script>
 ```
 
-`static/bidi-kit.js` is the committed copy of the bundle (`npm run static:sync` writes it; CI fails when
+`static/bidi-kit.js` (at the root of the repository) is the committed copy of the bundle (`npm run static:sync` writes it; CI fails when
 it drifts from the build). Pin `@main` to a tag or a commit hash for a URL that never changes.
 
 Use the CDN, not `raw.githubusercontent.com`: raw GitHub answers with `text/plain` and `nosniff`, and
