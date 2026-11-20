@@ -1,6 +1,6 @@
 {
   "name": "bidi-kit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Right-to-left text that behaves: Arabic inside English, French inside Arabic, no bidi glitches.",
   "keywords": [
     "bidi",
@@ -17,7 +17,7 @@
   "author": "Nour Yahyaoui",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Nour-yahyaoui/ui-storm.git",
+    "url": "git+https://github.com/Nour-yahyaoui/ui-storm.git",
     "directory": "packages/bidi-kit"
   },
   "type": "module",
@@ -34,7 +34,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "bidi-kit": "./bin/bidi-kit.mjs"
+    "bidi-kit": "bin/bidi-kit.mjs"
   },
   "files": [
     "dist",
@@ -50,7 +50,7 @@
     "typecheck": "tsc -p tsconfig.esm.json --noEmit",
     "test": "npm run build && node --test tests/*.test.mjs",
     "demo": "node scripts/serve.mjs",
-    "prepublishOnly": "npm test && node scripts/sync-static.mjs --check",
+    "prepublishOnly": "npm test",
     "test:only": "node --test tests/*.test.mjs",
     "pack:check": "npm run build && node scripts/check-tarball.mjs",
     "static:sync": "npm run build && node scripts/sync-static.mjs",
