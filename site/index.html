@@ -347,7 +347,7 @@
           </div>
         </div>
 
-        <p class="pane-note">
+        <p class="pane-note" id="demo-note">
           Same text, same size, same typeface, same paragraph direction on both sides. The only difference is
           which characters bidi-kit placed where.
         </p>
@@ -355,9 +355,10 @@
         <div class="run-chips" id="demo-runs" aria-label="Runs found by bidi-kit"></div>
 
         <div class="samples" role="group" aria-label="Example sentences">
-          <button type="button" data-sample="0" aria-pressed="true">English → Arabic</button>
-          <button type="button" data-sample="1" aria-pressed="false">Arabic → French</button>
-          <button type="button" data-sample="2" aria-pressed="false">Numbers</button>
+          <button type="button" data-sample="0" aria-pressed="true">Phone and percent</button>
+          <button type="button" data-sample="1" aria-pressed="false">Price with separators</button>
+          <button type="button" data-sample="2" aria-pressed="false">Date and time</button>
+          <button type="button" data-sample="3" aria-pressed="false">English + Arabic</button>
         </div>
       </div>
     </div>
@@ -571,21 +572,39 @@ import { paragraph } from "https://cdn.jsdelivr.net/npm/bidi-kit@0.1.0/dist/esm/
   var CDN = "https://cdn.jsdelivr.net/gh/Nour-yahyaoui/ui-storm@main/static/bidi-kit.js";
   var LOCAL = "./bidi-kit.js";
 
+  // Every sample here is chosen for one reason: it is a case where a single
+  // text node and an isolated run disagree. Numbers, signs and separators are
+  // neutral, so a plain paragraph hands them to whichever run wins, and the
+  // number comes apart. The last sample is the honest exception — the browser
+  // resolves it alone, and both panes agreeing is the point of showing it.
   var SAMPLES = [
     {
-      text: "The greeting is مرحبا.",
-      lang: "en",
-      base: "ltr"
-    },
-    {
-      text: "قال المدير: « Bonjour à tous, bienvenue à Tunis. » ثم غادر القاعة.",
+      label: "Phone and percent",
+      base: "rtl",
       lang: "ar",
-      base: "rtl"
-    },
-    {
       text: "الهاتف: +216 71 123 456، والخصم 15% فقط.",
+      note: "The plus sign is neutral. In the plain pane the Arabic run adopts it, so the whole number slides to the wrong end and reads backwards. bidi-kit keeps the sign, the digits and the percent in one left-to-right run."
+    },
+    {
+      label: "Price with separators",
+      base: "rtl",
       lang: "ar",
-      base: "rtl"
+      text: "السعر 1,248.50 دينار، والخصم 15% حتى آخر الشهر.",
+      note: "A thousands separator, a decimal point and a percent sign, all neutral, all decided by the paragraph in the plain pane. bidi-kit decides each one as part of the number it belongs to."
+    },
+    {
+      label: "Date and time",
+      base: "rtl",
+      lang: "ar",
+      text: "الموعد: 12/11/2026 على الساعة 09:30.",
+      note: "Slashes and colons are neutral as well. The plain pane lets the paragraph decide where they belong, so a date can come apart piece by piece. bidi-kit keeps 12/11/2026 and 09:30 as two left-to-right runs and lets the Arabic flow around them."
+    },
+    {
+      label: "English + Arabic",
+      base: "ltr",
+      lang: "en",
+      text: "The greeting is مرحبا.",
+      note: "These two are identical, and that is the correct answer. The browser resolves one Arabic word inside an English sentence by itself. Isolation earns its place on numbers and punctuation, not on every sentence."
     }
   ];
 
@@ -650,6 +669,9 @@ import { paragraph } from "https://cdn.jsdelivr.net/npm/bidi-kit@0.1.0/dist/esm/
     );
 
     runs(sample.text, kit, sample.base);
+
+    var note = document.getElementById("demo-note");
+    if (note) note.textContent = sample.note;
   }
 
   function wireCopy() {
