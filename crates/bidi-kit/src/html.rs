@@ -39,7 +39,7 @@ impl Part<'_> {
     #[must_use]
     pub fn text(&self) -> &str {
         match self {
-            Self::Text(text) | Self::Run { text, .. } => *text,
+            Self::Text(text) | Self::Run { text, .. } => text,
         }
     }
 }
