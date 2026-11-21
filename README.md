@@ -200,6 +200,7 @@ superseded by this backlog, and the decision to rebuild is recorded in
 - [inline direction and the `bidi-kit` package](docs/bidi-kit.md)
 - [using the Rust crate, and Dioxus](docs/dioxus.md)
 - [moving `bidi-kit` into its own repository](docs/standalone-repo.md)
+- [handoff brief: using `bidi-kit` in a Dioxus app](docs/dioxus-handoff.md)
 - [architecture decisions](docs/adr/)
 - [contributing](CONTRIBUTING.md)
 
