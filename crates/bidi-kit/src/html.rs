@@ -97,10 +97,11 @@ fn style_attribute(font: Option<&str>) -> String {
 pub fn bdi_html(text: &str, options: HtmlOptions<'_>) -> String {
     let dir = options.dir.map(Direction::as_str);
     let attributes = format!(
-        "{}{}{}",
+        "{}{}{}{}",
         attribute("dir", dir),
         attribute("lang", options.lang),
-        attribute("class", options.class)
+        attribute("class", options.class),
+        style_attribute(options.font)
     );
     let inner = escape_html(text);
     format!("<bdi{attributes}>{inner}</bdi>")
