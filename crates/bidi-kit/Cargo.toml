@@ -1,0 +1,30 @@
+[package]
+name = "bidi-kit"
+version = "0.1.1"
+description = "Bidirectional text for Rust: where a sentence changes direction, and how to isolate the pieces."
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme = "README.md"
+# The npm package is the reference implementation and the published artifact.
+# This crate exists so Rust code — Maud, Dioxus, an Actix handler — can make the
+# same decision before the HTML is written, so nothing here is published under
+# the same name on crates.io until that is a deliberate choice.
+publish = false
+
+[features]
+default = []
+# Pulls in Dioxus for the `MixedText` component. Off by default: a Maud or plain
+# Axum user should not compile a UI framework to isolate a string.
+dioxus = ["dep:dioxus"]
+
+[dependencies]
+dioxus = { version = "0.7", optional = true }
+
+[dev-dependencies]
+serde_json = "1"
+
+[lints.rust]
+unsafe_code = "forbid"

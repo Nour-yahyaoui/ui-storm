@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/ui-storm", "crates/ui-storm-web"]
+members = ["crates/bidi-kit", "crates/ui-storm", "crates/ui-storm-web"]
 resolver = "2"
 
 [workspace.package]
