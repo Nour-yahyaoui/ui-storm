@@ -1,0 +1,159 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: Package (npm)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      # Builds both module formats and the browser bundle, then runs the suite
+      # against the build rather than against the sources.
+      - name: Typecheck, build and test
+        run: npm test
+
+      # Both are generated from the JavaScript implementation: the fixtures the
+      # Rust tests read, and the character tables the Rust port classifies with.
+      # A stale copy is exactly how two implementations drift.
+      - name: Generated files match their generators
+        run: |
+          node tools/gen-unicode-tables.mjs --check
+          node tools/gen-corpus.mjs --check
+
+      - name: The published tarball contains what it claims to
+        run: npm run pack:check
+
+      # `static/bidi-kit.js` is what a static page loads from the CDN in front of
+      # GitHub. It is committed, so it can silently drift from the build.
+      - name: The committed CDN copy matches the build
+        run: node scripts/sync-static.mjs --check
+
+      - name: The demo and the module build are served
+        run: |
+          set -euo pipefail
+          node scripts/serve.mjs &
+          for _ in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4173/ > /dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:4173/ | grep -q "bidi-kit"
+          curl -fsS http://127.0.0.1:4173/dist/esm/index.js | grep -q "export {"
+          curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4173/dist/cjs/index.js | grep -q 200
+          curl -fsS http://127.0.0.1:4173/dist/bidi-kit.global.js | grep -q "root.bidiKit = factory()"
+          curl -fsS http://127.0.0.1:4173/demo/plain.html | grep -q "bidi-kit.global.js"
+
+      - name: The CLI answers on stdin
+        run: |
+          set -euo pipefail
+          printf 'Hello \xd9\x85\xd8\xb1\xd8\xad\xd8\xa8\xd8\xa7.' | node bin/bidi-kit.mjs runs | grep -q "^rtl"
+          printf 'text-align: left;' | node bin/bidi-kit.mjs check | grep -q "physical-text-align"
+          test "$(printf '\xd9\x85\xd8\xb1\xd8\xad\xd8\xa8\xd8\xa7' | node bin/bidi-kit.mjs dir)" = "rtl"
+
+  windows:
+    # The package is published from a developer machine at least as often as from
+    # CI, and those machines are not all Unix. This job exists because `.bin/tsc`
+    # and shell globs behave differently on Windows, and both once broke a release.
+    name: Package on Windows
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Build and test
+        run: npm test
+
+      - name: The published tarball contains what it claims to
+        run: npm run pack:check
+
+  rust:
+    name: Rust (crate and Dioxus feature)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      # Reported rather than blocking: rustfmt output varies between toolchain
+      # patch releases, and a formatting diff should never hide a failing test.
+      - name: Formatting (report only)
+        continue-on-error: true
+        run: cargo fmt --all -- --check
+
+      - name: Clippy — warnings are errors
+        run: cargo clippy --workspace --all-targets --message-format=short -- --deny warnings
+
+      - name: Tests
+        run: cargo test --workspace --all-targets
+
+      # The Dioxus component is behind a feature, so the default test run never
+      # compiles it.
+      - name: The Dioxus feature compiles
+        run: cargo check --package bidi-kit --features dioxus
+
+      - name: Release build
+        run: cargo build --workspace --release
+
+  installed:
+    # `npm ci && npm test` proves the repository works. This proves the thing
+    # people download works: the tarball is packed, installed into an empty
+    # directory, and used from there in all three ways.
+    name: The published tarball installs and works
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install and build
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Pack, install into an empty directory, and use it
+        run: |
+          set -euo pipefail
+          npm pack --pack-destination /tmp
+          mkdir -p /tmp/consumer && cd /tmp/consumer
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund /tmp/bidi-kit-*.tgz > /dev/null
+          node --input-type=module -e '
+            import { paragraph, segments, CSS } from "bidi-kit";
+            const runs = segments("Write to أحمد.", undefined);
+            if (runs.length !== 3) throw new Error(`expected 3 runs, got ${runs.length}`);
+            if (!paragraph([{ text: "أحمد", dir: "rtl" }]).includes("<bdi")) throw new Error("no bdi");
+            if (typeof CSS !== "string") throw new Error("no CSS");
+          '
+          test "$(printf '\xd9\x85\xd8\xb1\xd8\xad\xd8\xa8\xd8\xa7' | npx bidi-kit dir)" = "rtl"

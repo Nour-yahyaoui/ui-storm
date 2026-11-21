@@ -7,6 +7,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Added
 
+- `tools/standalone.mjs` — assembles the complete `bidi-kit` repository from this one:
+  the package at the root, the crate under `crates/`, the shared corpus at
+  `tests/corpus.json`, its own workspace, CI, changelog and guide. Every path rewrite
+  asserts what it is rewriting, so a file that changes shape fails the script instead
+  of producing a repository that builds here and breaks there.
+  See [`docs/standalone-repo.md`](docs/standalone-repo.md).
 - `crates/bidi-kit` — the segmentation decisions of the npm package, in Rust:
   `segments`, `detect_direction`, `resolve_direction`, `isolate`,
   `strip_bidi_controls`, and the `<bdi>` / `<p>` builders, so a server-rendered page

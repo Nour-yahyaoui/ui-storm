@@ -90,10 +90,10 @@ JavaScript content type, which is the entire difference.
 **4. From the npm CDN** — nothing to install, once the package is published:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/bidi-kit@0.1.0/dist/bidi-kit.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bidi-kit@0.1.1/dist/bidi-kit.global.js"></script>
 
 <script type="module">
-  import { paragraph } from "https://cdn.jsdelivr.net/npm/bidi-kit@0.1.0/dist/esm/index.js";
+  import { paragraph } from "https://cdn.jsdelivr.net/npm/bidi-kit@0.1.1/dist/esm/index.js";
 </script>
 ```
 

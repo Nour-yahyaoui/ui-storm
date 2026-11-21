@@ -169,6 +169,8 @@ crates/bidi-kit/           The same decisions in Rust: segments, isolates, a Dio
 tests/e2e/                 Playwright: axe, keyboard, RTL, no-JavaScript
 backlog/issues.json        Generated backlog, 332 issues across 13 milestones
 docs/                      Guides, accessibility statement, ADRs, backlog index
+tools/                     Generators for the shared corpus and tables, and the
+                           script that assembles the standalone bidi-kit repository
 scripts/build_backlog.py   Backlog generator (also publishes)
 ```
 
@@ -197,6 +199,7 @@ superseded by this backlog, and the decision to rebuild is recorded in
 - [direction and internationalisation](docs/direction.md)
 - [inline direction and the `bidi-kit` package](docs/bidi-kit.md)
 - [using the Rust crate, and Dioxus](docs/dioxus.md)
+- [moving `bidi-kit` into its own repository](docs/standalone-repo.md)
 - [architecture decisions](docs/adr/)
 - [contributing](CONTRIBUTING.md)
 
