@@ -7,6 +7,17 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Added
 
+- `crates/bidi-kit` — the segmentation decisions of the npm package, in Rust:
+  `segments`, `detect_direction`, `resolve_direction`, `isolate`,
+  `strip_bidi_controls`, and the `<bdi>` / `<p>` builders, so a server-rendered page
+  decides direction before the HTML exists instead of correcting it after hydration.
+- An optional `dioxus` feature with a `MixedText` component that renders one `<bdi>`
+  per run, and `docs/dioxus.md` explaining why the JavaScript bundle is the wrong
+  shape for a Rust renderer.
+- `packages/bidi-kit/tests/corpus.json` — shared fixtures generated from the
+  JavaScript and read by both suites, plus `tools/gen-corpus.mjs` and
+  `tools/gen-unicode-tables.mjs` with `--check` modes, so the port is verified against
+  behaviour instead of against a description of it.
 - Rust workspace: `ui-storm` (library) and `ui-storm-web` (gallery).
 - Components rendered with Maud: `Button`, `IconButton`, `Input`, `Checkbox`, `Dialog`, `Tabs`.
 - `direction::locale_direction` — BCP-47 tag to writing direction, with RTL language and script

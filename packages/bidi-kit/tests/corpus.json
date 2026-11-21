@@ -1,0 +1,408 @@
+{
+  "note": "Shared fixtures for the JavaScript package and the Rust crate. Generated from the JavaScript implementation, which is the reference: if a port disagrees with a line here, the port is wrong. Regenerate with `node tools/gen-corpus.mjs` after changing the segmenter on purpose.",
+  "cases": [
+    {
+      "text": "Hello أحمد world",
+      "base": null,
+      "runs": [
+        [
+          "ltr",
+          "Hello "
+        ],
+        [
+          "rtl",
+          "أحمد "
+        ],
+        [
+          "ltr",
+          "world"
+        ]
+      ],
+      "detect": "ltr",
+      "resolve": "ltr"
+    },
+    {
+      "text": "Write to أحمد.",
+      "base": null,
+      "runs": [
+        [
+          "ltr",
+          "Write to "
+        ],
+        [
+          "rtl",
+          "أحمد"
+        ],
+        [
+          "ltr",
+          "."
+        ]
+      ],
+      "detect": "ltr",
+      "resolve": "ltr"
+    },
+    {
+      "text": "مرحبا، كيف حالك؟",
+      "base": null,
+      "runs": [
+        [
+          "rtl",
+          "مرحبا، كيف حالك؟"
+        ]
+      ],
+      "detect": "rtl",
+      "resolve": "rtl"
+    },
+    {
+      "text": "الهاتف: +216 71 123 456",
+      "base": null,
+      "runs": [
+        [
+          "rtl",
+          "الهاتف: +"
+        ],
+        [
+          "ltr",
+          "216 71 123 456"
+        ]
+      ],
+      "detect": "rtl",
+      "resolve": "rtl"
+    },
+    {
+      "text": "الخصم 15% فقط.",
+      "base": null,
+      "runs": [
+        [
+          "rtl",
+          "الخصم "
+        ],
+        [
+          "ltr",
+          "15% "
+        ],
+        [
+          "rtl",
+          "فقط."
+        ]
+      ],
+      "detect": "rtl",
+      "resolve": "rtl"
+    },
+    {
+      "text": "السعر 1,248.50 دينار.",
+      "base": null,
+      "runs": [
+        [
+          "rtl",
+          "السعر "
+        ],
+        [
+          "ltr",
+          "1,248.50 "
+        ],
+        [
+          "rtl",
+          "دينار."
+        ]
+      ],
+      "detect": "rtl",
+      "resolve": "rtl"
+    },
+    {
+      "text": "الموعد: 12/11/2026 على الساعة 09:30.",
+      "base": null,
+      "runs": [
+        [
+          "rtl",
+          "الموعد: "
+        ],
+        [
+          "ltr",
+          "12/11/2026 "
+        ],
+        [
+          "rtl",
+          "على الساعة "
+        ],
+        [
+          "ltr",
+          "09:30"
+        ],
+        [
+          "rtl",
+          "."
+        ]
+      ],
+      "detect": "rtl",
+      "resolve": "rtl"
+    },
+    {
+      "text": "contact@exemple.tn ومعرف آخر",
+      "base": null,
+      "runs": [
+        [
+          "ltr",
+          "contact@exemple.tn "
+        ],
+        [
+          "rtl",
+          "ومعرف آخر"
+        ]
+      ],
+      "detect": "ltr",
+      "resolve": "ltr"
+    },
+    {
+      "text": "قال المدير: « Bonjour à tous »",
+      "base": null,
+      "runs": [
+        [
+          "rtl",
+          "قال المدير: « "
+        ],
+        [
+          "ltr",
+          "Bonjour à tous "
+        ],
+        [
+          "rtl",
+          "»"
+        ]
+      ],
+      "detect": "rtl",
+      "resolve": "rtl"
+    },
+    {
+      "text": "مرحبا Hello",
+      "base": null,
+      "runs": [
+        [
+          "rtl",
+          "مرحبا "
+        ],
+        [
+          "ltr",
+          "Hello"
+        ]
+      ],
+      "detect": "rtl",
+      "resolve": "rtl"
+    },
+    {
+      "text": "123 + 456",
+      "base": null,
+      "runs": [
+        [
+          "ltr",
+          "123 + 456"
+        ]
+      ],
+      "detect": "ltr",
+      "resolve": "ltr"
+    },
+    {
+      "text": "",
+      "base": null,
+      "runs": [],
+      "detect": "neutral",
+      "resolve": "ltr"
+    },
+    {
+      "text": "   ",
+      "base": null,
+      "runs": [
+        [
+          "ltr",
+          "   "
+        ]
+      ],
+      "detect": "neutral",
+      "resolve": "ltr"
+    },
+    {
+      "text": "الْعَرَبِيَّة",
+      "base": null,
+      "runs": [
+        [
+          "rtl",
+          "الْعَرَبِيَّة"
+        ]
+      ],
+      "detect": "rtl",
+      "resolve": "rtl"
+    },
+    {
+      "text": "x𞸀y",
+      "base": null,
+      "runs": [
+        [
+          "ltr",
+          "x"
+        ],
+        [
+          "rtl",
+          "𞸀"
+        ],
+        [
+          "ltr",
+          "y"
+        ]
+      ],
+      "detect": "ltr",
+      "resolve": "ltr"
+    },
+    {
+      "text": "١٢٣ ٤٥٦",
+      "base": null,
+      "runs": [
+        [
+          "rtl",
+          "١٢٣ ٤٥٦"
+        ]
+      ],
+      "detect": "rtl",
+      "resolve": "rtl"
+    },
+    {
+      "text": "Bonjour à tous",
+      "base": null,
+      "runs": [
+        [
+          "ltr",
+          "Bonjour à tous"
+        ]
+      ],
+      "detect": "ltr",
+      "resolve": "ltr"
+    },
+    {
+      "text": "مرحبا.",
+      "base": "ltr",
+      "runs": [
+        [
+          "rtl",
+          "مرحبا"
+        ],
+        [
+          "ltr",
+          "."
+        ]
+      ],
+      "detect": "rtl",
+      "resolve": "rtl"
+    },
+    {
+      "text": "مرحبا.",
+      "base": "rtl",
+      "runs": [
+        [
+          "rtl",
+          "مرحبا."
+        ]
+      ],
+      "detect": "rtl",
+      "resolve": "rtl"
+    },
+    {
+      "text": "شكراً لك، see you at 17:00.",
+      "base": null,
+      "runs": [
+        [
+          "rtl",
+          "شكراً لك، "
+        ],
+        [
+          "ltr",
+          "see you at 17:00"
+        ],
+        [
+          "rtl",
+          "."
+        ]
+      ],
+      "detect": "rtl",
+      "resolve": "rtl"
+    },
+    {
+      "text": "‮report.exe",
+      "base": null,
+      "runs": [
+        [
+          "ltr",
+          "‮report.exe"
+        ]
+      ],
+      "detect": "ltr",
+      "resolve": "ltr"
+    },
+    {
+      "text": "Ελληνικά και العربية",
+      "base": null,
+      "runs": [
+        [
+          "ltr",
+          "Ελληνικά και "
+        ],
+        [
+          "rtl",
+          "العربية"
+        ]
+      ],
+      "detect": "ltr",
+      "resolve": "ltr"
+    },
+    {
+      "text": "50% off — تخفيض 50%",
+      "base": null,
+      "runs": [
+        [
+          "ltr",
+          "50% off — "
+        ],
+        [
+          "rtl",
+          "تخفيض "
+        ],
+        [
+          "ltr",
+          "50%"
+        ]
+      ],
+      "detect": "ltr",
+      "resolve": "ltr"
+    },
+    {
+      "text": "مرحبا، bienvenue",
+      "base": "rtl",
+      "runs": [
+        [
+          "rtl",
+          "مرحبا، "
+        ],
+        [
+          "ltr",
+          "bienvenue"
+        ]
+      ],
+      "detect": "rtl",
+      "resolve": "rtl"
+    },
+    {
+      "text": "The report is ready: تقرير جاهز",
+      "base": "ltr",
+      "runs": [
+        [
+          "ltr",
+          "The report is ready: "
+        ],
+        [
+          "rtl",
+          "تقرير جاهز"
+        ]
+      ],
+      "detect": "ltr",
+      "resolve": "ltr"
+    }
+  ]
+}

@@ -104,6 +104,29 @@ group, slider, date field, file upload, error summary, tooltip, popover, menu, d
 palette, accordion, breadcrumb, pagination, stepper, tree view, alert, toast, progress, spinner,
 empty state, table, card, badge, avatar.
 
+## The same decision in Rust
+
+`packages/bidi-kit` decides where a sentence changes direction in JavaScript.
+`crates/bidi-kit` decides the same thing in Rust, from the same rules, before the
+HTML exists — which is what a server-rendered page needs, and what a Dioxus app
+needs if it is ever to hydrate without disagreeing with itself.
+
+```rust
+use bidi_kit::{segments, Direction};
+
+let runs = segments("Write to أحمد.", None);
+assert_eq!(runs[1].dir, Direction::Rtl);
+assert_eq!(runs[1].text, "أحمد");
+```
+
+With the `dioxus` feature it also ships a component that renders one `<bdi>` per
+run. See [`docs/dioxus.md`](docs/dioxus.md).
+
+The two implementations are kept in step by a fixture file generated from the
+JavaScript and read by both test suites, and by character tables generated from
+Node's own Unicode properties — so "the port agrees with the library" is a claim
+CI can refute.
+
 ## Verification
 
 Nothing here is a claim without a test.
@@ -117,6 +140,8 @@ Nothing here is a claim without a test.
 | Every page answers, in both directions, with one `h1` and a skip link | `crates/ui-storm-web/tests/gallery.rs` |
 | No serious axe violation, no keyboard trap, no focus loss | `tests/e2e/*.spec.ts` |
 | The backlog is generated, never hand-edited | `python3 scripts/build_backlog.py --check` |
+| The Rust port and the npm package split text identically | `packages/bidi-kit/tests/corpus.json`, read by both suites |
+| The port classifies characters as the reference does | `node tools/gen-unicode-tables.mjs --check` |
 
 Run everything locally:
 
@@ -140,6 +165,7 @@ crates/ui-storm/           The library: components, direction, tokens, assets
   tests/components.rs      Markup contracts
 crates/ui-storm-web/       The gallery: routes, layout, pages
 packages/bidi-kit/         npm package: Arabic in English, French in Arabic, no bidi glitches
+crates/bidi-kit/           The same decisions in Rust: segments, isolates, a Dioxus component
 tests/e2e/                 Playwright: axe, keyboard, RTL, no-JavaScript
 backlog/issues.json        Generated backlog, 332 issues across 13 milestones
 docs/                      Guides, accessibility statement, ADRs, backlog index
@@ -170,6 +196,7 @@ superseded by this backlog, and the decision to rebuild is recorded in
 - [accessibility statement](docs/accessibility.md)
 - [direction and internationalisation](docs/direction.md)
 - [inline direction and the `bidi-kit` package](docs/bidi-kit.md)
+- [using the Rust crate, and Dioxus](docs/dioxus.md)
 - [architecture decisions](docs/adr/)
 - [contributing](CONTRIBUTING.md)
 

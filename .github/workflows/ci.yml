@@ -55,6 +55,12 @@ jobs:
           set -o pipefail
           cargo test --workspace --all-targets 2>&1 | tee tests.log
 
+      # The Dioxus component is behind a feature, so the default test run never
+      # compiles it. Checked here, where a broken component is still a red check
+      # on a pull request and not a surprise for whoever enables the feature.
+      - name: The Dioxus feature compiles
+        run: cargo check --package bidi-kit --features dioxus
+
       - name: Report diagnostics
         if: always()
         env:
@@ -121,6 +127,14 @@ jobs:
       - name: Typecheck, build and test
         working-directory: packages/bidi-kit
         run: npm test
+
+      # Both files are generated from the JavaScript implementation: the fixtures
+      # the Rust tests read, and the Unicode tables the Rust port classifies
+      # characters with. A stale copy is exactly how two implementations drift.
+      - name: Generated files match their generators
+        run: |
+          node tools/gen-unicode-tables.mjs --check
+          node tools/gen-corpus.mjs --check
 
       - name: The published tarball contains what it claims to
         working-directory: packages/bidi-kit
